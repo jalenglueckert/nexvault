@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NEXVAULT">
+<meta name="theme-color" content="#000500">
+<title>NEXVAULT — Command Suite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#000500;--bg2:#010a01;--panel:#030f03;--panel2:#051505;
+  --b1:#0a2a0a;--b2:#0f3a0f;--b3:#143a14;
+  --g1:#00ff41;--g2:#00cc33;--g3:#008f1a;--g4:#004d10;
+  --r1:#ff3d3d;--a1:#ffaa00;--cy:#00d4ff;--pu:#9d00ff;--wh:#f0f4f0;
+  --text:#00ff41;--text2:#00aa2a;--text3:#005010;--text4:#003008;
+  --mono:'JetBrains Mono',monospace;
+}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);display:flex;flex-direction:column;}
+#mx{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:0.05;pointer-events:none;}
+.sl{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.1) 3px,rgba(0,0,0,0.1) 4px);pointer-events:none;z-index:9999;}
+.wrap{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh;}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid var(--b2);background:rgba(0,4,0,0.98);flex-shrink:0;gap:10px;min-height:42px;}
+.mac-btns{display:flex;gap:6px;align-items:center;}
+.mac-btn{width:13px;height:13px;border-radius:50%;border:none;cursor:pointer;transition:filter .15s;flex-shrink:0;}
+.mac-btn:hover{filter:brightness(1.3);}
+.mac-close{background:#ff5f57;}
+.mac-min{background:#ffbd2e;}
+.mac-max{background:#28c840;}
+.logo{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--wh);letter-spacing:6px;text-shadow:0 0 20px rgba(240,244,240,0.25);white-space:nowrap;}
+.logo em{color:var(--wh);font-style:normal;}
+.topbar-right{margin-left:auto;display:flex;gap:12px;align-items:center;}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--g1);animation:blink 1.4s infinite;display:inline-block;flex-shrink:0;}
+.dot.r{background:var(--r1);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+.clk{font-size:13px;font-weight:500;color:var(--g1);letter-spacing:1px;white-space:nowrap;}
+.dt{font-size:9px;color:var(--text3);letter-spacing:2px;white-space:nowrap;}
+
+/* NAV */
+.nav{display:flex;background:rgba(0,3,0,0.98);border-bottom:1px solid var(--b1);overflow-x:auto;flex-shrink:0;scrollbar-width:none;}
+.nav::-webkit-scrollbar{display:none;}
+.nb{font-size:9px;font-weight:500;letter-spacing:2px;padding:8px 12px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text3);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:var(--mono);}
+.nb:hover{color:var(--g2);background:rgba(0,255,65,0.02);}
+.nb.on{color:var(--g1);border-bottom-color:var(--g1);background:rgba(0,255,65,0.04);}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px;}
+.content::-webkit-scrollbar{width:3px;}
+.content::-webkit-scrollbar-track{background:#000300;}
+.content::-webkit-scrollbar-thumb{background:var(--b2);}
+.tv{display:none;}.tv.on{display:block;}
+
+/* PANELS */
+.pnl{background:var(--panel);border:1px solid var(--b1);margin-bottom:10px;overflow:hidden;}
+.ph{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--panel2);border-bottom:1px solid var(--b1);font-size:9px;font-weight:600;letter-spacing:3px;color:var(--text3);}
+.ph .ac{color:var(--g1);}
+.ph .tg{margin-left:auto;font-size:8px;padding:2px 6px;border:1px solid var(--b2);color:var(--text3);letter-spacing:1px;}
+.ph .tg.ok{color:var(--g2);border-color:var(--g2);}
+.ph .tg.wr{color:var(--a1);border-color:var(--a1);}
+.ph .tg.bd{color:var(--r1);border-color:var(--r1);}
+.ph .tg.cy{color:var(--cy);border-color:var(--cy);}
+.ph .tg.pu{color:var(--pu);border-color:var(--pu);}
+
+/* INPUTS */
+.row{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--b1);background:rgba(0,3,0,0.5);flex-wrap:wrap;}
+.gi{flex:1;min-width:80px;background:#000800;border:1px solid var(--b2);padding:6px 10px;font-family:var(--mono);font-size:11px;font-weight:400;color:var(--g1);outline:none;transition:border-color .15s;}
+.gi:focus{border-color:var(--g1);}
+.gi::placeholder{color:var(--text3);}
+.gs{background:#000800;border:1px solid var(--b2);padding:6px 8px;font-family:var(--mono);font-size:10px;color:var(--text2);outline:none;cursor:pointer;}
+.gb{background:transparent;border:1px solid var(--g3);padding:6px 11px;font-family:var(--mono);font-size:9px;font-weight:600;color:var(--g2);cursor:pointer;letter-spacing:2px;transition:all .15s;white-space:nowrap;}
+.gb:hover{background:rgba(0,255,65,0.06);border-color:var(--g1);color:var(--g1);}
+.gb.cy{border-color:var(--cy);color:var(--cy);}
+.gb.cy:hover{background:rgba(0,212,255,0.06);}
+.gb.rd{border-color:var(--r1);color:var(--r1);}
+.gb.rd:hover{background:rgba(255,61,61,0.06);}
+.gb.au{border-color:var(--a1);color:var(--a1);}
+.gb.au:hover{background:rgba(255,170,0,0.06);}
+.gb.pu{border-color:var(--pu);color:var(--pu);}
+.gb.pu:hover{background:rgba(157,0,255,0.06);}
+.gb.wh{border-color:var(--wh);color:var(--wh);}
+.gb.wh:hover{background:rgba(240,244,240,0.06);}
+
+/* LISTS */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:1px;background:var(--b1);}
+.sc{background:var(--panel);padding:10px;text-align:center;}
+.sc .n{font-size:20px;font-weight:600;color:var(--g1);}
+.sc .l{font-size:8px;color:var(--text3);letter-spacing:2px;margin-top:2px;}
+.la{max-height:260px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--b2) transparent;}
+.itm{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--b1);transition:background .15s;animation:si .2s ease;}
+@keyframes si{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:translateX(0)}}
+.itm:hover{background:rgba(0,255,65,0.015);}
+.chk{width:13px;height:13px;border:1px solid var(--b2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.chk:hover{border-color:var(--g1);}
+.chk.on{background:var(--g4);border-color:var(--g1);}
+.chk.on::after{content:'✓';font-size:9px;color:var(--g1);font-weight:700;}
+.itxt{flex:1;font-size:12px;font-weight:400;}
+.itxt.dn{text-decoration:line-through;color:var(--text3);}
+.bdg{font-size:8px;padding:2px 5px;border:1px solid;font-weight:600;}
+.bh{color:var(--r1);border-color:var(--r1);}
+.bm{color:var(--a1);border-color:var(--a1);}
+.bl{color:var(--g2);border-color:var(--g2);}
+.dbt{background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;transition:color .15s;font-family:var(--mono);}
+.dbt:hover{color:var(--r1);}
+.es{text-align:center;padding:28px;font-size:10px;color:var(--text3);letter-spacing:3px;}
+
+/* TABS within panels */
+.ttbs{display:flex;border-bottom:1px solid var(--b1);}
+.tt{flex:1;padding:7px;font-size:9px;font-weight:600;letter-spacing:3px;color:var(--text3);cursor:pointer;text-align:center;background:transparent;border:none;border-bottom:2px solid transparent;transition:all .15s;font-family:var(--mono);}
+.tt:hover{color:var(--g2);}
+.tt.on{color:var(--g1);border-bottom-color:var(--g1);}
+
+/* TICKER */
+.ticker-wrap{overflow:hidden;border-bottom:1px solid var(--b1);background:rgba(0,3,0,0.9);padding:4px 0;flex-shrink:0;}
+.ticker{display:flex;gap:24px;animation:tick 35s linear infinite;white-space:nowrap;}
+@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ti{font-size:10px;color:var(--text2);flex-shrink:0;}
+.tup{color:var(--g2);}
+.tdn{color:var(--r1);}
+
+/* WEIGHT */
+.w4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1px;background:var(--b1);}
+.ws{background:var(--panel);padding:10px 12px;}
+.sl2{font-size:8px;letter-spacing:2px;color:var(--text3);margin-bottom:3px;}
+.sv{font-size:20px;font-weight:600;color:var(--g1);}
+.su{font-size:10px;color:var(--text3);margin-left:2px;}
+.lr{display:flex;align-items:center;padding:6px 12px;border-bottom:1px solid var(--b1);font-size:10px;animation:si .2s ease;}
+.lr .ld{color:var(--text3);flex:1;font-size:9px;}
+.lr .lv{color:var(--g1);margin-right:8px;}
+.lup{color:var(--r1);}
+.ldn{color:var(--g2);}
+.pred-box{padding:10px 12px;background:rgba(157,0,255,0.05);border-top:1px solid rgba(157,0,255,0.2);font-size:10px;color:var(--text2);line-height:1.6;}
+.pred-lbl{font-size:8px;letter-spacing:3px;color:var(--pu);margin-bottom:3px;font-weight:600;}
+.ng{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:1px;background:var(--b1);}
+.nc{background:var(--panel);padding:10px 12px;}
+.nn{font-size:8px;color:var(--text3);letter-spacing:2px;margin-bottom:4px;}
+.nv{font-size:18px;font-weight:600;}
+.ns{font-size:8px;color:var(--text3);margin-top:2px;}
+.npb{height:2px;background:var(--b1);margin-top:6px;}
+.npf{height:100%;transition:width .4s;}
+
+/* HABITS */
+.hhr{display:flex;align-items:center;padding:7px 12px;border-bottom:1px solid var(--b1);gap:3px;background:rgba(0,3,0,0.5);}
+.dl{font-size:8px;width:24px;text-align:center;color:var(--text3);}
+.dl.td{color:var(--g1);}
+.hnc{flex:1;font-size:8px;color:var(--text3);letter-spacing:2px;}
+.hrow{display:flex;align-items:center;padding:6px 12px;border-bottom:1px solid var(--b1);gap:3px;transition:background .15s;animation:si .2s ease;}
+.hrow:hover{background:rgba(0,255,65,0.015);}
+.hrn{flex:1;font-size:12px;}
+.hc{width:24px;height:24px;border:1px solid var(--b2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.hc:hover{border-color:var(--g2);}
+.hc.on{background:var(--g4);border-color:var(--g1);}
+.hc.on::after{content:'✓';font-size:10px;color:var(--g1);}
+.hc.td.on{background:rgba(0,212,255,0.15);border-color:var(--cy);}
+.hc.td.on::after{color:var(--cy);}
+.stk{font-size:10px;min-width:36px;text-align:right;color:var(--r1);}
+.stk.hot{color:var(--g1);}
+.pr{height:2px;background:var(--b1);margin:0 12px 8px;}
+.pf{height:100%;background:var(--g1);transition:width .4s;}
+
+/* VAULT */
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.fc{background:var(--panel);border:1px solid var(--b1);overflow:hidden;}
+.fi{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--b1);font-size:11px;}
+.fi:last-child{border:none;}
+.fl{color:var(--text2);}
+.fa{font-size:10px;font-weight:600;}
+.fa.p{color:var(--g2);}
+.fa.n{color:var(--r1);}
+.fa.c{color:var(--cy);}
+.bb{height:4px;background:var(--b1);margin-top:3px;}
+.bf{height:100%;transition:width .4s;}
+.tb{display:flex;justify-content:space-between;padding:8px 12px;border-top:1px solid var(--b1);background:var(--panel2);}
+.tl{font-size:8px;color:var(--text3);letter-spacing:2px;}
+
+/* STOCKS */
+.stock-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:1px;background:var(--b1);}
+.stock-card{background:var(--panel);padding:9px 11px;cursor:pointer;transition:background .15s;position:relative;animation:si .2s ease;}
+.stock-card:hover{background:rgba(0,255,65,0.025);}
+.stock-card.pinned{border-left:2px solid var(--g1);}
+.stock-card.owned{border-left:2px solid var(--cy);}
+.stock-sym{font-size:14px;font-weight:700;color:var(--g1);letter-spacing:1px;}
+.stock-name{font-size:8px;color:var(--text3);letter-spacing:.5px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.stock-price{font-size:13px;font-weight:600;margin-bottom:1px;}
+.stock-chg{font-size:9px;font-weight:500;}
+.sup{color:var(--g2);}.sdn{color:var(--r1);}
+.pin-btn{position:absolute;top:5px;right:5px;background:none;border:none;font-size:10px;cursor:pointer;color:var(--text3);transition:color .15s;padding:0;font-family:var(--mono);}
+.pin-btn:hover{color:var(--g1);}.pin-btn.on{color:var(--g1);}
+.own-btn{position:absolute;top:5px;right:20px;background:none;border:none;font-size:9px;cursor:pointer;color:var(--text3);transition:color .15s;padding:0;font-family:var(--mono);}
+.own-btn:hover{color:var(--cy);}.own-btn.on{color:var(--cy);}
+.mktbar{display:flex;gap:1px;background:var(--b1);overflow-x:auto;scrollbar-width:none;}
+.mktbar::-webkit-scrollbar{display:none;}
+.mktcell{background:var(--panel);padding:7px 12px;text-align:center;flex:1;min-width:70px;}
+.ms{font-size:8px;color:var(--text3);letter-spacing:2px;}
+.mv{font-size:13px;font-weight:600;}
+.mc{font-size:9px;}
+.heatmap-area{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:2px;background:var(--b1);padding:2px;}
+.heat-cell{padding:10px 12px;cursor:default;}
+.heat-sector{font-size:8px;color:rgba(255,255,255,0.4);letter-spacing:2px;margin-bottom:3px;}
+.heat-val{font-size:16px;font-weight:600;}
+.heat-cnt{font-size:8px;margin-top:2px;opacity:.5;}
+
+/* NEWS */
+.news-item{padding:9px 12px;border-bottom:1px solid var(--b1);cursor:pointer;transition:background .15s;animation:si .2s ease;}
+.news-item:hover{background:rgba(0,255,65,0.015);}
+.news-hl{font-size:11px;font-weight:400;color:var(--text);line-height:1.5;margin-bottom:3px;}
+.news-meta{display:flex;gap:10px;font-size:8px;color:var(--text3);letter-spacing:.5px;flex-wrap:wrap;}
+.cat-markets{color:#00cc33;}.cat-tech{color:#00d4ff;}.cat-macro{color:#ffaa00;}.cat-crypto{color:#9d00ff;}.cat-health{color:#ff3d3d;}.cat-energy{color:#ff8c00;}
+
+/* WEATHER */
+.weather-day{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:1px;background:var(--b1);}
+.wd-cell{background:var(--panel);padding:10px 8px;text-align:center;}
+.wd-time{font-size:8px;color:var(--text3);letter-spacing:1px;margin-bottom:4px;}
+.wd-ico{font-size:20px;margin-bottom:3px;}
+.wd-temp{font-size:14px;font-weight:600;color:var(--cy);}
+.wd-desc{font-size:8px;color:var(--text3);margin-top:2px;}
+.week-weather{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--b1);}
+.ww-cell{background:var(--panel);padding:8px 6px;text-align:center;}
+.ww-day{font-size:8px;color:var(--text3);letter-spacing:1px;margin-bottom:4px;}
+.ww-ico{font-size:16px;margin-bottom:2px;}
+.ww-hi{font-size:12px;font-weight:600;color:var(--g2);}
+.ww-lo{font-size:10px;color:var(--r1);}
+
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--b1);}
+.cal-head{background:var(--panel2);padding:6px 4px;text-align:center;font-size:9px;color:var(--text3);letter-spacing:1px;}
+.cal-day{background:var(--panel);padding:6px 4px;text-align:center;min-height:52px;cursor:pointer;transition:background .15s;position:relative;vertical-align:top;}
+.cal-day:hover{background:rgba(0,255,65,0.02);}
+.cal-day.today{border:1px solid var(--g1);}
+.cal-day.other-month{opacity:.3;}
+.cal-day .dn{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:3px;}
+.cal-day.today .dn{color:var(--g1);}
+.cal-event{font-size:8px;padding:1px 3px;margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--b1);}
+.cal-title{font-size:12px;font-weight:600;color:var(--g1);letter-spacing:3px;}
+
+/* HOME */
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.hcard{background:var(--panel);border:1px solid var(--b1);padding:12px;cursor:pointer;transition:all .15s;}
+.hcard:hover{border-color:var(--g2);background:rgba(0,255,65,0.015);}
+.hcard-ico{font-size:22px;font-weight:700;color:var(--g1);margin-bottom:6px;letter-spacing:2px;}
+.hcard-title{font-size:8px;font-weight:700;letter-spacing:4px;color:var(--g2);margin-bottom:5px;}
+.hcard-stat{font-size:18px;font-weight:600;color:var(--g1);}
+.hcard-sub{font-size:9px;color:var(--text3);margin-top:3px;letter-spacing:.5px;}
+
+/* ASSISTANT */
+.chat-area{max-height:320px;overflow-y:auto;padding:8px;scrollbar-width:thin;scrollbar-color:var(--b2) transparent;}
+.msg{padding:7px 10px;margin-bottom:6px;font-size:11px;line-height:1.6;animation:si .2s ease;}
+.msg.user{border-left:2px solid var(--g1);color:var(--g2);}
+.msg.ai{border-left:2px solid var(--cy);color:var(--text);background:rgba(0,212,255,0.03);}
+.msg.ai .ai-lbl{font-size:8px;color:var(--cy);letter-spacing:2px;margin-bottom:3px;font-weight:700;}
+.msg.user .user-lbl{font-size:8px;color:var(--g3);letter-spacing:2px;margin-bottom:3px;font-weight:700;}
+.typing{display:flex;gap:4px;padding:8px 12px;}
+.typing span{width:5px;height:5px;border-radius:50%;background:var(--cy);animation:dot 1.2s infinite;}
+.typing span:nth-child(2){animation-delay:.2s;}
+.typing span:nth-child(3){animation-delay:.4s;}
+@keyframes dot{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+/* PORTFOLIO */
+.port-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--b1);font-size:11px;}
+.port-sym{width:56px;font-weight:700;color:var(--cy);}
+.port-qty{width:50px;color:var(--text2);}
+.port-val{flex:1;font-weight:600;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:10000;display:flex;align-items:center;justify-content:center;}
+.modal{background:var(--panel);border:1px solid var(--b2);padding:20px;min-width:280px;max-width:90vw;}
+.modal h3{font-size:12px;font-weight:700;letter-spacing:3px;color:var(--g1);margin-bottom:14px;}
+.modal-row{margin-bottom:10px;}
+.modal-label{font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:4px;}
+.modal-btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+<canvas id="mx"></canvas>
+<div class="sl"></div>
+<div class="wrap">
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="mac-btns">
+    <button class="mac-btn mac-close" onclick="if(confirm('Close NEXVAULT?'))window.close()" title="Close"></button>
+    <button class="mac-btn mac-min" onclick="showWeatherModal()" title="Weather Forecast"></button>
+    <button class="mac-btn mac-max" onclick="toggleFullscreen()" title="Fullscreen"></button>
+  </div>
+  <div class="logo" style="margin:0 auto;">NEX<em>VAULT</em></div>
+  <div class="topbar-right">
+    <div class="dot"></div>
+    <div class="clk" id="clk">--:-- --</div>
+    <div class="dt" id="dt">----</div>
+    <div class="dot r"></div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap"><div class="ticker" id="ticker"></div></div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nb on" onclick="sw('home',this)">&gt;_HOME</button>
+  <button class="nb" onclick="sw('todo',this)">&gt;_TASKS</button>
+  <button class="nb" onclick="sw('weight',this)">&gt;_WEIGHT</button>
+  <button class="nb" onclick="sw('habits',this)">&gt;_HABITS</button>
+  <button class="nb" onclick="sw('stocks',this)">&gt;_MARKETS</button>
+  <button class="nb" onclick="sw('portfolio',this)">&gt;_PORTFOLIO</button>
+  <button class="nb" onclick="sw('news',this)">&gt;_INTEL</button>
+  <button class="nb" onclick="sw('vault',this)">&gt;_VAULT</button>
+  <button class="nb" onclick="sw('calendar',this)">&gt;_CALENDAR</button>
+  <button class="nb" onclick="sw('assistant',this)">&gt;_NEXAI</button>
+  <button class="nb" onclick="sw('settings',this)">&gt;_SYS</button>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- ═══ HOME ═══ -->
+<div id="tab-home" class="tv on">
+  <div class="pnl"><div class="ph"><span class="ac">///</span>NEXVAULT_DASHBOARD<div class="tg cy">LIVE</div></div><div class="mktbar" id="home-mkt"></div></div>
+  <div class="home-grid" id="home-grid"></div>
+  <div class="pnl" style="margin-top:8px;"><div class="ph"><span class="ac">///</span>LATEST_INTEL<div class="tg ok">FEED</div></div><div id="home-news"></div></div>
+</div>
+
+<!-- ═══ TASKS ═══ -->
+<div id="tab-todo" class="tv">
+  <div class="pnl">
+    <div class="ph"><span class="ac">///</span>TASK_MATRIX<div class="tg" id="tc-tag">0 ACTIVE</div></div>
+    <div class="ttbs"><button class="tt on" onclick="stm('short',this)">SHORT_TERM</button><button class="tt" onclick="stm('long',this)">LONG_TERM</button></div>
+    <div class="row"><input class="gi" id="ti" placeholder="// task directive..." maxlength="200" onkeydown="if(event.key==='Enter')addTodo()"><select class="gs" id="tp"><option value="high">HIGH</option><option value="med" selected>MED</option><option value="low">LOW</option></select><button class="gb" onclick="addTodo()">[+ADD]</button></div>
+    <div class="la" id="tlist"></div>
+    <div class="sgrid"><div class="sc"><div class="n" id="st-t">0</div><div class="l">TOTAL</div></div><div class="sc"><div class="n" id="st-d">0</div><div class="l">DONE</div></div><div class="sc"><div class="n" id="st-p">0</div><div class="l">PENDING</div></div></div>
+  </div>
+</div>
+
+<!-- ═══ WEIGHT ═══ -->
+<div id="tab-weight" class="tv">
+  <div class="pnl">
+    <div class="ph"><span class="ac">///</span>WEIGHT_PROTOCOL<div class="tg" id="we-tag">0 ENTRIES</div></div>
+    <div class="w4"><div class="ws"><div class="sl2">CURRENT</div><div class="sv" id="wc">--<span class="su">lbs</span></div></div><div class="ws"><div class="sl2">GOAL</div><div class="sv" id="wg">--<span class="su">lbs</span></div></div><div class="ws"><div class="sl2">30D CHANGE</div><div class="sv" id="wch" style="font-size:15px">--</div></div><div class="ws"><div class="sl2">REMAINING</div><div class="sv" id="wrm" style="font-size:15px;color:var(--g2)">--</div></div></div>
+    <div class="row"><input class="gi" id="win" type="number" step="0.1" min="50" max="700" placeholder="// weight (lbs)..." onkeydown="if(event.key==='Enter')addW()"><input class="gi" id="wdt" type="date" style="max-width:140px"><input class="gi" id="wgl" type="number" step="0.1" min="50" max="700" placeholder="goal lbs" style="max-width:100px" onkeydown="if(event.key==='Enter')setGoal()"><button class="gb au" onclick="setGoal()">[SET GOAL]</button><button class="gb" onclick="addW()">[LOG]</button></div>
+    <div style="padding:8px;height:150px;position:relative;"><canvas id="wchart" role="img" aria-label="Weight chart"></canvas></div>
+    <div class="pred-box" id="pred" style="display:none"><div class="pred-lbl">PREDICTION_ENGINE</div><span id="pred-val"></span></div>
+    <div class="ph" style="border-top:1px solid var(--b1);"><span class="ac">///</span>NUTRITION_TARGETS<div class="tg ok">AUTO-CALC</div></div>
+    <div class="ng"><div class="nc"><div class="nn">CALORIES</div><div class="nv" id="n-cal" style="color:var(--cy)">--</div><div class="ns">kcal/day</div><div class="npb"><div class="npf" id="np-cal" style="background:var(--cy);width:0"></div></div></div><div class="nc"><div class="nn">PROTEIN</div><div class="nv" id="n-pro" style="color:var(--g2)">--</div><div class="ns">grams/day</div><div class="npb"><div class="npf" id="np-pro" style="background:var(--g2);width:0"></div></div></div><div class="nc"><div class="nn">CARBS</div><div class="nv" id="n-carb" style="color:var(--a1)">--</div><div class="ns">grams/day</div><div class="npb"><div class="npf" id="np-carb" style="background:var(--a1);width:0"></div></div></div><div class="nc"><div class="nn">FAT</div><div class="nv" id="n-fat" style="color:var(--r1)">--</div><div class="ns">grams/day</div><div class="npb"><div class="npf" id="np-fat" style="background:var(--r1);width:0"></div></div></div><div class="nc"><div class="nn">FIBER</div><div class="nv" id="n-fib" style="color:var(--pu)">--</div><div class="ns">grams/day</div><div class="npb"><div class="npf" id="np-fib" style="background:var(--pu);width:0"></div></div></div><div class="nc"><div class="nn">WATER</div><div class="nv" id="n-wat" style="color:var(--cy)">--</div><div class="ns">oz/day</div><div class="npb"><div class="npf" id="np-wat" style="background:var(--cy);width:0"></div></div></div></div>
+    <div class="ph" style="border-top:1px solid var(--b1);"><span class="ac">///</span>ENTRY_LOG</div>
+    <div class="la" id="wlog"></div>
+  </div>
+</div>
+
+<!-- ═══ HABITS ═══ -->
+<div id="tab-habits" class="tv">
+  <div class="pnl">
+    <div class="ph"><span class="ac">///</span>HABIT_ENGINE<div class="tg" id="hpct">0% TODAY</div></div>
+    <div class="pr"><div class="pf" id="hpr" style="width:0%"></div></div>
+    <div class="hhr" id="h-hdr"></div>
+    <div id="hlist"></div>
+    <div class="row"><input class="gi" id="hi" placeholder="// new habit directive..." maxlength="60" onkeydown="if(event.key==='Enter')addHabit()"><button class="gb cy" onclick="addHabit()">[+ADD]</button></div>
+    <div class="sgrid"><div class="sc"><div class="n" id="ht-t">0</div><div class="l">HABITS</div></div><div class="sc"><div class="n" id="ht-d">0</div><div class="l">TODAY</div></div><div class="sc"><div class="n" id="ht-s">0</div><div class="l">BEST STREAK</div></div></div>
+  </div>
+</div>
+
+<!-- ═══ MARKETS ═══ -->
+<div id="tab-stocks" class="tv">
+  <div class="pnl"><div class="ph"><span class="ac">///</span>MARKET_WATCH<div class="tg cy">SIMULATED</div></div><div class="mktbar" id="mkt-indices"></div></div>
+  <div class="pnl">
+    <div class="ph"><span class="ac">///</span>SEARCH_&amp;_PIN
+      <div style="margin-left:auto;display:flex;gap:6px;align-items:center;">
+        <input class="gi" id="stock-search" placeholder="Search ticker or name..." style="max-width:180px;padding:3px 8px;font-size:10px;" oninput="searchStocks(this.value)">
+        <input class="gi" id="stock-add" placeholder="TICKER" style="max-width:80px;padding:3px 8px;font-size:10px;" maxlength="6" onkeydown="if(event.key==='Enter')pinStockCustom()">
+        <button class="gb cy" onclick="pinStockCustom()" style="padding:3px 10px;">[PIN]</button>
+      </div>
+    </div>
+    <div id="stock-search-results" style="display:none;max-height:160px;overflow-y:auto;"></div>
+    <div class="ph" style="border-top:1px solid var(--b1);font-size:8px;letter-spacing:2px;">PINNED STOCKS <span style="color:var(--cy);margin-left:6px;">★ = PINNED</span><span style="color:var(--cy);margin-left:10px;">◆ = OWNED</span></div>
+    <div class="stock-grid" id="pinned-stocks"></div>
+  </div>
+  <div class="pnl"><div class="ph"><span class="ac">///</span>SECTOR_HEATMAP<div class="tg ok">LIVE</div></div><div class="heatmap-area" id="heatmap-area"></div></div>
+  <div class="pnl">
+    <div class="ph"><span class="ac">///</span>ALL_MARKETS</div>
+    <div class="stock-grid" id="all-stocks"></div>
+  </div>
+  <div class="pnl"><div class="ph"><span class="ac">///</span>PRICE_CHART<div class="tg cy" id="chart-sym">SELECT A STOCK</div></div><div style="height:180px;position:relative;padding:4px 8px;"><canvas id="schart" role="img" aria-label="Stock chart"></canvas></div></div>
+</div>
+
+<!-- ═══ PORTFOLIO ═══ -->
+<div id="tab-portfolio" class="tv">
+  <div class="pnl">
+    <div class="ph"><span class="ac">///</span>MY_PORTFOLIO<div class="tg cy">HOLDINGS</div></div>
+    <div class="sgrid"><div class="sc"><div class="n" id="port-val" style="color:var(--cy)">$0</div><div class="l">TOTAL VALUE</div></div><div class="sc"><div class="n" id="port-gain" style="color:var(--g2)">$0</div><div class="l">GAIN/LOSS</div></div><div class="sc"><div class="n" id="port-cnt">0</div><div class="l">POSITIONS</div></div></div>
+    <div class="row">
+      <input class="gi" id="port-sym" placeholder="TICKER" style="max-width:80px" maxlength="8" onkeydown="if(event.key==='Enter')addHolding()">
+      <input class="gi" id="port-qty" type="number" step="0.001" min="0" placeholder="shares" style="max-width:80px" onkeydown="if(event.key==='Enter')addHolding()">
+      <input class="gi" id="port-cost" type="number" step="0.01" min="0" placeholder="avg cost/share" style="max-width:110px" onkeydown="if(event.key==='Enter')addHolding()">
+      <button class="gb cy" onclick="addHolding()">[+ADD POSITION]</button>
+    </div>
+    <div class="la" id="port-list" style="max-height:300px;"></div>
+  </div>
+</div>
+
+<!-- ═══ INTEL ═══ -->
+<div id="tab-news" class="tv">
+  <div class="pnl">
+    <div class="ph"><span class="ac">///</span>INTEL_FEED<div class="tg ok">ACTIVE</div></div>
+    <div class="row"><select class="gs" id="news-filter" onchange="renderNews('news-list')"><option value="all">ALL SECTORS</option><option value="markets">MARKETS</option><option value="tech">TECH</option><option value="macro">MACRO</option><option value="crypto">CRYPTO</option><option value="health">HEALTH</option><option value="energy">ENERGY</option></select><button class="gb cy" onclick="shuffleNews();renderNews('news-list')">[REFRESH FEED]</button></div>
+    <div id="news-list"></div>
+  </div>
+</div>
+
+<!-- ═══ VAULT ═══ -->
+<div id="tab-vault" class="tv">
+  <div class="pnl"><div class="ph"><span class="ac">///</span>VAULT_OVERVIEW</div><div class="sgrid"><div class="sc"><div class="n" id="v-in" style="color:var(--g2)">$0</div><div class="l">INCOME</div></div><div class="sc"><div class="n" id="v-sp" style="color:var(--r1)">$0</div><div class="l">SPENT</div></div><div class="sc"><div class="n" id="v-sb" style="color:var(--pu)">$0</div><div class="l">SUBS</div></div><div class="sc"><div class="n" id="v-lf" style="color:var(--cy)">$0</div><div class="l">REMAINING</div></div></div></div>
+  <div class="f2">
+    <div class="fc"><div class="ph"><span class="ac">///</span>INCOME</div><div class="row"><input class="gi" id="ii-n" placeholder="source..." maxlength="30" onkeydown="if(event.key==='Enter')addInc()"><input class="gi" id="ii-a" type="number" min="0" step="0.01" placeholder="$" style="max-width:80px" onkeydown="if(event.key==='Enter')addInc()"><select class="gs" id="ii-f"><option value="monthly">MO</option><option value="biweekly">2WK</option><option value="weekly">WK</option><option value="annual">YR</option></select><button class="gb au" onclick="addInc()">[+]</button></div><div class="la" id="ilist" style="max-height:150px;"></div><div class="tb"><span class="tl">MONTHLY</span><span style="font-size:11px;font-weight:600;color:var(--g2)" id="itot">$0.00</span></div></div>
+    <div class="fc"><div class="ph"><span class="ac">///</span>SUBSCRIPTIONS</div><div class="row"><input class="gi" id="si-n" placeholder="service..." maxlength="30" onkeydown="if(event.key==='Enter')addSub()"><input class="gi" id="si-a" type="number" min="0" step="0.01" placeholder="$/mo" style="max-width:80px" onkeydown="if(event.key==='Enter')addSub()"><button class="gb pu" onclick="addSub()">[+]</button></div><div class="la" id="slist" style="max-height:150px;"></div><div class="tb"><span class="tl">MONTHLY</span><span style="font-size:11px;font-weight:600;color:var(--pu)" id="stot">$0.00</span></div></div>
+  </div>
+  <div class="pnl" style="margin-top:8px;"><div class="ph"><span class="ac">///</span>SPENDING_ZONES<div class="tg" id="bz-tag">0% ALLOCATED</div></div><div class="row"><input class="gi" id="bi-n" placeholder="zone name..." maxlength="30" onkeydown="if(event.key==='Enter')addBudget()"><input class="gi" id="bi-b" type="number" min="0" step="0.01" placeholder="budget $" style="max-width:90px" onkeydown="if(event.key==='Enter')addBudget()"><input class="gi" id="bi-s" type="number" min="0" step="0.01" placeholder="spent $" style="max-width:90px" onkeydown="if(event.key==='Enter')addBudget()"><button class="gb" onclick="addBudget()">[+ZONE]</button></div><div id="blist"></div></div>
+  <div class="pnl" style="margin-top:8px;"><div class="ph"><span class="ac">///</span>TRANSACTIONS</div><div class="row"><input class="gi" id="tx-d" placeholder="description..." maxlength="50" onkeydown="if(event.key==='Enter')addTx()"><input class="gi" id="tx-a" type="number" step="0.01" placeholder="$" style="max-width:80px" onkeydown="if(event.key==='Enter')addTx()"><select class="gs" id="tx-t"><option value="expense">OUT</option><option value="income">IN</option></select><input class="gi" id="tx-c" placeholder="category" style="max-width:90px" onkeydown="if(event.key==='Enter')addTx()"><button class="gb" onclick="addTx()">[LOG]</button></div><div class="la" id="txlist" style="max-height:200px;"></div></div>
+</div>
+
+<!-- ═══ CALENDAR ═══ -->
+<div id="tab-calendar" class="tv">
+  <div class="pnl">
+    <div class="cal-nav"><button class="gb" onclick="calPrev()">[&lt;]</button><div class="cal-title" id="cal-title">MONTH YEAR</div><button class="gb" onclick="calNext()">[&gt;]</button></div>
+    <div class="cal-grid" id="cal-head"></div>
+    <div class="cal-grid" id="cal-body"></div>
+  </div>
+  <div class="pnl">
+    <div class="ph"><span class="ac">///</span>ADD_EVENT</div>
+    <div class="row">
+      <input class="gi" id="ev-date" type="date" style="max-width:140px">
+      <input class="gi" id="ev-title" placeholder="event title..." maxlength="60" onkeydown="if(event.key==='Enter')addEvent()">
+      <input class="gi" id="ev-time" type="time" style="max-width:100px">
+      <select class="gs" id="ev-color" onchange="updateEvColorPreview()" style="font-weight:700;">
+        <option value="#00ff41" style="color:#00ff41;background:#000800;">&#9632; GREEN</option>
+        <option value="#00d4ff" style="color:#00d4ff;background:#000800;">&#9632; CYAN</option>
+        <option value="#ff3d3d" style="color:#ff3d3d;background:#000800;">&#9632; RED</option>
+        <option value="#ffaa00" style="color:#ffaa00;background:#000800;">&#9632; AMBER</option>
+        <option value="#9d00ff" style="color:#9d00ff;background:#000800;">&#9632; PURPLE</option>
+        <option value="#ff69b4" style="color:#ff69b4;background:#000800;">&#9632; PINK</option>
+        <option value="#ffffff" style="color:#ffffff;background:#000800;">&#9632; WHITE</option>
+      </select>
+      <div id="ev-color-dot" style="width:10px;height:10px;border-radius:50%;background:#00ff41;flex-shrink:0;align-self:center;"></div>
+      <select class="gs" id="ev-repeat">
+        <option value="none">NO REPEAT</option>
+        <option value="daily">DAILY</option>
+        <option value="weekly">WEEKLY</option>
+        <option value="biweekly">BI-WEEKLY</option>
+        <option value="monthly">MONTHLY</option>
+        <option value="yearly">YEARLY</option>
+      </select>
+      <input class="gi" id="ev-repeat-end" type="date" placeholder="repeat until..." style="max-width:140px;" title="Repeat until this date (leave blank for 1 year)">
+      <button class="gb cy" onclick="addEvent()">[+EVENT]</button>
+    </div>
+    <div class="ph" style="border-top:1px solid var(--b1);"><span class="ac">///</span>UPCOMING_EVENTS</div>
+    <div class="la" id="ev-list" style="max-height:200px;"></div>
+  </div>
+</div>
+
+<!-- ═══ NEXAI ASSISTANT ═══ -->
+<div id="tab-assistant" class="tv">
+  <div class="pnl">
+    <div class="ph"><span class="ac">///</span>NEXAI_ASSISTANT<div class="tg cy">CLAUDE-POWERED</div></div>
+    <div class="chat-area" id="chat-area"><div class="msg ai"><div class="ai-lbl">NEXAI_v1.0</div>NEXVAULT AI online. I have full access to your tasks, weight, habits, vault, stocks, calendar, and portfolio. Ask me anything — "am I free on Friday?", "how's my portfolio doing?", "what should I eat today?", or any question about your data.</div></div>
+    <div id="chat-typing" style="display:none;" class="typing"><span></span><span></span><span></span></div>
+    <div class="row"><input class="gi" id="chat-input" placeholder="// ask NEXAI anything..." onkeydown="if(event.key==='Enter')sendChat()"><button class="gb cy" onclick="sendChat()">[SEND]</button><button class="gb" onclick="clearChat()">[CLEAR]</button></div>
+    <div style="padding:8px 12px;border-top:1px solid var(--b1);"><div style="font-size:8px;color:var(--text3);letter-spacing:2px;margin-bottom:4px;">QUICK QUERIES</div><div style="display:flex;gap:6px;flex-wrap:wrap;"><button class="gb" style="font-size:8px;padding:3px 8px;" onclick="quickChat('Am I free this week?')">[FREE?]</button><button class="gb" style="font-size:8px;padding:3px 8px;" onclick="quickChat('How is my portfolio doing?')">[PORTFOLIO?]</button><button class="gb" style="font-size:8px;padding:3px 8px;" onclick="quickChat('How much money do I have left this month?')">[BALANCE?]</button><button class="gb" style="font-size:8px;padding:3px 8px;" onclick="quickChat('What should I eat today based on my nutrition goals?')">[NUTRITION?]</button><button class="gb" style="font-size:8px;padding:3px 8px;" onclick="quickChat('What habits have I completed today?')">[HABITS?]</button></div></div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div id="tab-settings" class="tv">
+  <div class="pnl">
+    <div class="ph"><span class="ac">///</span>SYSTEM_CONFIG</div>
+    <div style="padding:12px;display:flex;flex-direction:column;gap:10px;">
+      <div>
+        <div style="font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:6px;">WEATHER LOCATION</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input class="gi" id="loc-city" placeholder="City (e.g. Portland)" style="flex:2;min-width:120px">
+          <input class="gi" id="loc-state" placeholder="State (e.g. OR)" style="flex:1;min-width:60px;max-width:90px">
+          <input class="gi" id="loc-country" placeholder="Country (e.g. US)" style="flex:1;min-width:60px;max-width:90px">
+          <button class="gb cy" onclick="saveLocation()">[SAVE &amp; FETCH]</button>
+        </div>
+        <div id="loc-status" style="font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:1px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="pnl">
+    <div class="ph"><span class="ac">///</span>DATA_MANAGEMENT</div>
+    <div style="padding:12px;display:flex;flex-direction:column;gap:10px;">
+      <div><div style="font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:6px;">EXPORT — save all your data to a JSON file to transfer to another device</div><button class="gb cy" onclick="exportData()">[EXPORT ALL DATA]</button></div>
+      <div><div style="font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:6px;">IMPORT — load a previously exported JSON file</div><input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)"><button class="gb au" onclick="document.getElementById('import-file').click()">[IMPORT DATA FILE]</button></div>
+      <div><div style="font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:6px;">BANK CSV IMPORT — drag or select your bank's exported CSV</div><div id="csv-drop" style="border:1px dashed var(--b2);padding:16px;text-align:center;font-size:10px;color:var(--text3);cursor:pointer;" onclick="document.getElementById('csv-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--g1)'" ondragleave="this.style.borderColor='var(--b2)'" ondrop="handleCsvDrop(event)">[DROP CSV HERE OR CLICK TO SELECT]</div><input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleCsvFile(this)"></div>
+    </div>
+  </div>
+  <div class="pnl">
+    <div class="ph"><span class="ac">///</span>INSTALL_GUIDE<div class="tg ok">PWA + USB</div></div>
+    <div style="padding:12px;font-size:10px;color:var(--text2);line-height:1.8;letter-spacing:.5px;">
+      <div style="color:var(--g1);font-size:9px;letter-spacing:3px;margin-bottom:6px;font-weight:700;">PHONE INSTALL (iOS):</div>
+      1. Open this file in Safari<br>2. Tap the Share button (box with arrow)<br>3. Tap "Add to Home Screen"<br>4. Tap "Add" — NEXVAULT appears as an app<br><br>
+      <div style="color:var(--g1);font-size:9px;letter-spacing:3px;margin-bottom:6px;font-weight:700;">PHONE INSTALL (Android):</div>
+      1. Open in Chrome<br>2. Tap menu (⋮) → "Add to Home screen"<br>3. Tap "Add" — done<br><br>
+      <div style="color:var(--g1);font-size:9px;letter-spacing:3px;margin-bottom:6px;font-weight:700;">USB / SHARE TO ANOTHER DEVICE:</div>
+      1. Export your data (button above)<br>2. Copy nexvault.html to USB drive<br>3. Open on the other device in any browser<br>4. Import your data file — all data restored<br>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .content -->
+</div><!-- end .wrap -->
+
+<!-- WEATHER MODAL -->
+<div id="weather-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="min-width:320px;max-width:95vw;">
+    <h3>/// WEATHER_FORECAST</h3>
+    <div id="weather-location-info" style="font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:10px;"></div>
+    <div id="weather-content"><div style="font-size:10px;color:var(--text3);text-align:center;padding:20px;">Loading forecast...</div></div>
+    <div class="modal-btns"><button class="gb" onclick="document.getElementById('weather-modal').style.display='none'">[CLOSE]</button><button class="gb cy" onclick="fetchWeather()">[REFRESH]</button></div>
+  </div>
+</div>
+
+<!-- CALENDAR EVENT MODAL -->
+<div id="cal-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal">
+    <h3 id="cal-modal-title">/// ADD_EVENT</h3>
+    <div class="modal-row"><div class="modal-label">DATE</div><input class="gi" id="modal-ev-date" type="date" style="width:100%"></div>
+    <div class="modal-row"><div class="modal-label">TITLE</div><input class="gi" id="modal-ev-title" placeholder="event title..." style="width:100%"></div>
+    <div class="modal-row"><div class="modal-label">TIME</div><input class="gi" id="modal-ev-time" type="time" style="width:100%"></div>
+    <div class="modal-row"><div class="modal-label">COLOR</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select class="gs" id="modal-ev-color" style="flex:1;font-weight:700;" onchange="document.getElementById('modal-color-dot').style.background=this.value">
+          <option value="#00ff41" style="color:#00ff41;background:#000800;">&#9632; GREEN</option>
+          <option value="#00d4ff" style="color:#00d4ff;background:#000800;">&#9632; CYAN</option>
+          <option value="#ff3d3d" style="color:#ff3d3d;background:#000800;">&#9632; RED</option>
+          <option value="#ffaa00" style="color:#ffaa00;background:#000800;">&#9632; AMBER</option>
+          <option value="#9d00ff" style="color:#9d00ff;background:#000800;">&#9632; PURPLE</option>
+          <option value="#ff69b4" style="color:#ff69b4;background:#000800;">&#9632; PINK</option>
+          <option value="#ffffff" style="color:#ffffff;background:#000800;">&#9632; WHITE</option>
+        </select>
+        <div id="modal-color-dot" style="width:12px;height:12px;border-radius:50%;background:#00ff41;flex-shrink:0;"></div>
+      </div>
+    </div>
+    <div class="modal-row"><div class="modal-label">REPEAT</div>
+      <select class="gs" id="modal-ev-repeat" style="width:100%">
+        <option value="none">NO REPEAT</option>
+        <option value="daily">DAILY</option>
+        <option value="weekly">WEEKLY</option>
+        <option value="biweekly">BI-WEEKLY</option>
+        <option value="monthly">MONTHLY</option>
+        <option value="yearly">YEARLY</option>
+      </select>
+    </div>
+    <div class="modal-row"><div class="modal-label">REPEAT UNTIL</div><input class="gi" id="modal-ev-repeat-end" type="date" style="width:100%" title="Leave blank for 1 year default"></div>
+    <div class="modal-btns"><button class="gb cy" onclick="addEventFromModal()">[SAVE]</button><button class="gb" onclick="document.getElementById('cal-modal').style.display='none'">[CANCEL]</button></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════
+const S={
+  get:k=>{try{return JSON.parse(localStorage.getItem('nv4_'+k))}catch(e){return null}},
+  set:(k,v)=>{try{localStorage.setItem('nv4_'+k,JSON.stringify(v))}catch(e){}}
+};
+let todos=S.get('todos')||{short:[],long:[]};
+let weights=S.get('weights')||[];
+let wgoal=S.get('wgoal')||null;
+let habits=S.get('habits')||[];
+let incomes=S.get('incomes')||[];
+let subs=S.get('subs')||[];
+let budgets=S.get('budgets')||[];
+let txs=S.get('txs')||[];
+let pinnedStocks=S.get('pinned')||['AAPL','TSLA','NVDA','MSFT'];
+let portfolio=S.get('portfolio')||[];
+let events=S.get('events')||[];
+let weatherLoc=S.get('wloc')||{name:'New York, US',lat:40.71,lon:-74.01};
+let chatHistory=[];
+let newsData=[];
+let stockData={};
+let curTodo='short';
+let wChart=null,sChart=null;
+let curChartSym='';
+let calYear=new Date().getFullYear();
+let calMonth=new Date().getMonth();
+let weatherCache=null;
+
+function save(){
+  S.set('todos',todos);S.set('weights',weights);S.set('wgoal',wgoal);
+  S.set('habits',habits);S.set('incomes',incomes);S.set('subs',subs);
+  S.set('budgets',budgets);S.set('txs',txs);S.set('pinned',pinnedStocks);
+  S.set('portfolio',portfolio);S.set('events',events);S.set('wloc',weatherLoc);
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function sw(tab,btn){
+  document.querySelectorAll('.tv').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+tab).classList.add('on');
+  btn.classList.add('on');
+  if(tab==='weight')setTimeout(renderWChart,60);
+  if(tab==='stocks')setTimeout(()=>{renderStocks();if(curChartSym)renderStockChart(curChartSym);},60);
+  if(tab==='home')renderHome();
+  if(tab==='calendar')renderCalendar();
+  if(tab==='portfolio')renderPortfolio();
+  if(tab==='settings'){
+    if(weatherLoc.name){
+      // Try to parse stored name back into parts if possible
+      const parts=(weatherLoc.name||'').split(', ');
+      const cityEl=document.getElementById('loc-city');
+      const stateEl=document.getElementById('loc-state');
+      const countryEl=document.getElementById('loc-country');
+      if(cityEl)cityEl.value=parts[0]||'';
+      if(stateEl)stateEl.value=parts.length===3?parts[1]:'';
+      if(countryEl)countryEl.value=parts[parts.length-1]||'';
+    }
+  }
+}
+function stm(m,btn){curTodo=m;document.querySelectorAll('.tt').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderTodos();}
+function tod(){return new Date().toISOString().split('T')[0];}
+function toggleFullscreen(){if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});else document.exitFullscreen();}
+
+// ═══════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════
+function tick(){
+  const n=new Date();
+  let h=n.getHours(),m=n.getMinutes(),s=n.getSeconds(),ap=h>=12?'PM':'AM';
+  h=h%12||12;
+  document.getElementById('clk').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+' '+ap;
+  document.getElementById('dt').textContent=n.toISOString().split('T')[0];
+}
+
+// ═══════════════════════════════════════════
+// MATRIX RAIN
+// ═══════════════════════════════════════════
+function initMatrix(){
+  const c=document.getElementById('mx'),ctx=c.getContext('2d');
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  const chars='01アイウエNEXVAULT<>{}|=+-$#@!%01アウ';
+  let cols=Math.floor(c.width/14),drops=Array(cols).fill(1);
+  setInterval(()=>{
+    ctx.fillStyle='rgba(0,4,0,0.05)';ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle='#00ff41';ctx.font='13px JetBrains Mono';
+    drops.forEach((y,i)=>{
+      ctx.fillStyle=Math.random()>0.95?'#ffffff':'#00ff41';
+      ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*14,y*14);
+      if(y*14>c.height&&Math.random()>0.975)drops[i]=0;
+      drops[i]++;
+    });
+  },55);
+}
+
+// ═══════════════════════════════════════════
+// TICKER
+// ═══════════════════════════════════════════
+function buildTicker(){
+  const items=Object.entries(stockData).map(([sym,d])=>{
+    const cls=d.chgPct>=0?'tup':'tdn';const sign=d.chgPct>=0?'+':'';
+    return`<span class="ti">${sym} <span class="${cls}">${d.price>1000?'$'+d.price.toLocaleString():'$'+d.price.toFixed(2)} ${sign}${d.chgPct.toFixed(2)}%</span></span>`;
+  }).join('');
+  const el=document.getElementById('ticker');el.innerHTML=items+items;
+}
+
+// ═══════════════════════════════════════════
+// STOCK DATA (simulated with realistic movement)
+// ═══════════════════════════════════════════
+const STOCKS_BASE={
+  AAPL:{name:'Apple',price:189.84,sector:'Tech'},MSFT:{name:'Microsoft',price:415.20,sector:'Tech'},
+  NVDA:{name:'NVIDIA',price:875.40,sector:'Tech'},GOOGL:{name:'Alphabet',price:175.10,sector:'Tech'},
+  META:{name:'Meta',price:525.80,sector:'Tech'},AMZN:{name:'Amazon',price:198.60,sector:'Tech'},
+  TSLA:{name:'Tesla',price:172.30,sector:'Auto'},JPM:{name:'JP Morgan',price:205.40,sector:'Finance'},
+  BAC:{name:'BofA',price:42.80,sector:'Finance'},GS:{name:'Goldman',price:478.90,sector:'Finance'},
+  XOM:{name:'ExxonMobil',price:112.40,sector:'Energy'},CVX:{name:'Chevron',price:158.20,sector:'Energy'},
+  PFE:{name:'Pfizer',price:28.60,sector:'Health'},JNJ:{name:'J&J',price:147.30,sector:'Health'},
+  WMT:{name:'Walmart',price:68.90,sector:'Retail'},NFLX:{name:'Netflix',price:678.50,sector:'Media'},
+  DIS:{name:'Disney',price:111.20,sector:'Media'},BTC:{name:'Bitcoin',price:67420,sector:'Crypto'},
+  ETH:{name:'Ethereum',price:3524,sector:'Crypto'},SOL:{name:'Solana',price:178.40,sector:'Crypto'},
+  SPY:{name:'S&P 500 ETF',price:523.40,sector:'Index'},QQQ:{name:'Nasdaq ETF',price:441.20,sector:'Index'}
+};
+function genStockData(){
+  const out={};
+  Object.entries(STOCKS_BASE).forEach(([sym,info])=>{
+    const chg=parseFloat(((Math.random()-0.48)*4).toFixed(2));
+    const price=parseFloat((info.price*(1+chg/100)).toFixed(2));
+    let p=price*0.92;const hist=[];
+    for(let i=0;i<30;i++){p*=(1+(Math.random()-0.48)*0.025);hist.push(parseFloat(p.toFixed(2)));}
+    hist.push(price);
+    out[sym]={...info,price,chgPct:chg,hist};
+  });
+  return out;
+}
+stockData=genStockData();
+
+// ═══════════════════════════════════════════
+// MARKET BAR
+// ═══════════════════════════════════════════
+function renderMarketBar(elId){
+  const data=[
+    {sym:'S&P 500',val:'5,847',chg:stockData.SPY?.chgPct||0.42},
+    {sym:'NASDAQ',val:'19,021',chg:parseFloat(((Math.random()-0.4)*2).toFixed(2))},
+    {sym:'DOW',val:'42,140',chg:parseFloat(((Math.random()-0.4)*1.5).toFixed(2))},
+    {sym:'VIX',val:'16.40',chg:parseFloat(((Math.random()-0.5)*3).toFixed(2))},
+    {sym:'10Y',val:'4.42%',chg:parseFloat(((Math.random()-0.5)*0.2).toFixed(2))},
+    {sym:'BTC',val:'$'+stockData.BTC.price.toLocaleString(),chg:stockData.BTC.chgPct}
+  ];
+  const el=document.getElementById(elId);if(!el)return;
+  el.innerHTML=data.map(d=>{
+    const cls=d.chg>=0?'tup':'tdn';const sign=d.chg>=0?'+':'';
+    return`<div class="mktcell"><div class="ms">${d.sym}</div><div class="mv" style="color:${d.chg>=0?'#00cc33':'#ff3d3d'}">${d.val}</div><div class="mc ${cls}">${sign}${d.chg.toFixed(2)}%</div></div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+// STOCK SEARCH
+// ═══════════════════════════════════════════
+function searchStocks(q){
+  const res=document.getElementById('stock-search-results');
+  if(!q||q.length<1){res.style.display='none';return;}
+  const matches=Object.entries(stockData).filter(([sym,d])=>
+    sym.includes(q.toUpperCase())||d.name.toLowerCase().includes(q.toLowerCase())
+  ).slice(0,6);
+  if(!matches.length){res.style.display='none';return;}
+  res.style.display='block';
+  res.innerHTML=matches.map(([sym,d])=>{
+    const cls=d.chgPct>=0?'tup':'tdn';const sign=d.chgPct>=0?'+':'';
+    return`<div class="itm" style="cursor:pointer;" onclick="pinSym('${sym}');document.getElementById('stock-search').value='';document.getElementById('stock-search-results').style.display='none';">
+      <span style="font-weight:700;color:var(--g1);width:50px;">${sym}</span>
+      <span class="itxt">${d.name}</span>
+      <span style="font-size:10px;color:${d.chgPct>=0?'#00cc33':'#ff3d3d'}">${sign}${d.chgPct.toFixed(2)}%</span>
+      <span style="font-size:9px;color:var(--text3);margin-left:6px;">${d.sector}</span>
+    </div>`;
+  }).join('');
+}
+
+function pinStockCustom(){
+  const v=document.getElementById('stock-add').value.trim().toUpperCase();
+  if(!v)return;pinSym(v);document.getElementById('stock-add').value='';
+}
+function pinSym(sym){
+  if(!pinnedStocks.includes(sym))pinnedStocks.push(sym);
+  if(!stockData[sym]){
+    const chg=parseFloat(((Math.random()-0.45)*5).toFixed(2));const price=parseFloat((50+Math.random()*500).toFixed(2));
+    let p=price*0.9;const hist=[];
+    for(let i=0;i<30;i++){p*=(1+(Math.random()-0.48)*0.025);hist.push(parseFloat(p.toFixed(2)));}
+    hist.push(price);
+    stockData[sym]={name:sym,price,chgPct:chg,hist,sector:'Custom'};
+  }
+  save();renderStocks();
+}
+function unpinStock(sym){pinnedStocks=pinnedStocks.filter(s=>s!==sym);save();renderStocks();}
+function toggleOwned(sym){
+  const idx=portfolio.findIndex(p=>p.sym===sym);
+  if(idx>=0){portfolio.splice(idx,1);}else{portfolio.push({sym,qty:0,cost:0});}
+  save();renderStocks();renderPortfolio();
+}
+
+// ═══════════════════════════════════════════
+// RENDER STOCKS
+// ═══════════════════════════════════════════
+function renderStocks(){
+  renderMarketBar('mkt-indices');
+  const pinEl=document.getElementById('pinned-stocks');
+  pinEl.innerHTML=pinnedStocks.length
+    ?pinnedStocks.map(sym=>stockCardHtml(sym,true)).join('')
+    :'<div class="es">// SEARCH OR ENTER TICKER ABOVE TO PIN</div>';
+  document.getElementById('all-stocks').innerHTML=Object.keys(stockData).map(sym=>stockCardHtml(sym,false)).join('');
+  renderHeatmap();
+}
+function stockCardHtml(sym,isPinnedSection){
+  const d=stockData[sym];if(!d)return'';
+  const cls=d.chgPct>=0?'sup':'sdn';const sign=d.chgPct>=0?'+':'';
+  const isPinned=pinnedStocks.includes(sym);
+  const isOwned=portfolio.some(p=>p.sym===sym);
+  const priceFmt=d.price>999?'$'+d.price.toLocaleString():'$'+d.price.toFixed(2);
+  return`<div class="stock-card ${isPinned?'pinned':''} ${isOwned?'owned':''}" onclick="selectStock('${sym}')">
+    <button class="own-btn ${isOwned?'on':''}" onclick="event.stopPropagation();toggleOwned('${sym}')" title="${isOwned?'Remove from portfolio':'Add to portfolio'}">◆</button>
+    <button class="pin-btn ${isPinned?'on':''}" onclick="event.stopPropagation();${isPinned?'unpinStock':'pinSym'}('${sym}')" title="${isPinned?'Unpin':'Pin'}">${isPinned?'★':'☆'}</button>
+    <div class="stock-sym">${sym}</div>
+    <div class="stock-name">${d.name}</div>
+    <div class="stock-price" style="color:${d.chgPct>=0?'#00cc33':'#ff3d3d'}">${priceFmt}</div>
+    <div class="stock-chg ${cls}">${sign}${d.chgPct.toFixed(2)}%</div>
+  </div>`;
+}
+function renderHeatmap(){
+  const sectors={};
+  Object.entries(stockData).forEach(([sym,d])=>{
+    if(!sectors[d.sector])sectors[d.sector]={total:0,count:0};
+    sectors[d.sector].total+=d.chgPct;sectors[d.sector].count++;
+  });
+  document.getElementById('heatmap-area').innerHTML=Object.entries(sectors).map(([sec,d])=>{
+    const avg=d.total/d.count;const intensity=Math.min(Math.abs(avg)/3,1);
+    const bg=avg>=0?`rgba(0,${Math.round(80+intensity*170)},${Math.round(20+intensity*20)},${0.12+intensity*0.28})`:`rgba(${Math.round(100+intensity*155)},20,20,${0.12+intensity*0.28})`;
+    const border=avg>=0?`rgba(0,${Math.round(100+intensity*155)},40,0.5)`:`rgba(${Math.round(120+intensity*135)},30,30,0.5)`;
+    const sign=avg>=0?'+':'';
+    return`<div class="heat-cell" style="background:${bg};border:1px solid ${border};">
+      <div class="heat-sector">${sec.toUpperCase()}</div>
+      <div class="heat-val" style="color:${avg>=0?'#00ff41':'#ff3d3d'}">${sign}${avg.toFixed(2)}%</div>
+      <div class="heat-cnt">${d.count} stocks</div>
+    </div>`;
+  }).join('');
+}
+function selectStock(sym){
+  curChartSym=sym;
+  document.getElementById('chart-sym').textContent=sym+' — '+stockData[sym]?.name;
+  renderStockChart(sym);
+}
+function renderStockChart(sym){
+  const canvas=document.getElementById('schart');if(!canvas)return;
+  if(sChart){sChart.destroy();sChart=null;}
+  const d=stockData[sym];if(!d)return;
+  const color=d.chgPct>=0?'#00cc33':'#ff3d3d';
+  sChart=new Chart(canvas,{type:'line',data:{labels:d.hist.map((_,i)=>'D'+(i+1)),datasets:[{data:d.hist,borderColor:color,backgroundColor:color+'10',borderWidth:1.5,pointRadius:0,tension:0.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#010a01',borderColor:'#0a2a0a',borderWidth:1,titleColor:'#005010',bodyColor:color,titleFont:{family:'JetBrains Mono',size:9},bodyFont:{family:'JetBrains Mono',size:11}}},scales:{x:{grid:{color:'rgba(0,255,65,0.04)'},ticks:{color:'#005010',font:{family:'JetBrains Mono',size:8},maxTicksLimit:8}},y:{grid:{color:'rgba(0,255,65,0.04)'},ticks:{color:'#005010',font:{family:'JetBrains Mono',size:8}}}}}});
+}
+
+// ═══════════════════════════════════════════
+// PORTFOLIO
+// ═══════════════════════════════════════════
+function addHolding(){
+  const sym=document.getElementById('port-sym').value.trim().toUpperCase();
+  const qty=parseFloat(document.getElementById('port-qty').value);
+  const cost=parseFloat(document.getElementById('port-cost').value);
+  if(!sym||isNaN(qty)||qty<=0)return;
+  const idx=portfolio.findIndex(p=>p.sym===sym);
+  if(idx>=0){portfolio[idx].qty=qty;portfolio[idx].cost=cost||portfolio[idx].cost;}
+  else portfolio.push({sym,qty,cost:cost||0});
+  if(!stockData[sym])pinSym(sym);
+  document.getElementById('port-sym').value='';document.getElementById('port-qty').value='';document.getElementById('port-cost').value='';
+  save();renderPortfolio();
+}
+function delHolding(sym){portfolio=portfolio.filter(p=>p.sym!==sym);save();renderPortfolio();}
+function renderPortfolio(){
+  let totalVal=0,totalCost=0;
+  const rows=portfolio.map(p=>{
+    const d=stockData[p.sym];
+    const currentPrice=d?d.price:0;
+    const val=currentPrice*p.qty;
+    const cost=p.cost*p.qty;
+    const gain=val-cost;
+    const gainPct=cost>0?((gain/cost)*100).toFixed(2):0;
+    totalVal+=val;totalCost+=cost;
+    const cls=gain>=0?'tup':'tdn';const sign=gain>=0?'+':'';
+    return`<div class="port-item">
+      <div class="port-sym">${p.sym}</div>
+      <div class="port-qty" style="color:var(--text2)">${p.qty} sh</div>
+      <div class="port-val" style="color:${gain>=0?'#00cc33':'#ff3d3d'}">$${val.toFixed(2)}</div>
+      <div style="font-size:9px;color:${gain>=0?'#00cc33':'#ff3d3d'};min-width:80px;">${sign}$${Math.abs(gain).toFixed(2)} (${sign}${gainPct}%)</div>
+      <div style="font-size:9px;color:var(--text3);min-width:80px;">cost: $${p.cost.toFixed(2)}</div>
+      <button class="dbt" onclick="delHolding('${p.sym}')">X</button>
+    </div>`;
+  }).join('');
+  const totalGain=totalVal-totalCost;
+  document.getElementById('port-val').textContent='$'+totalVal.toFixed(0);
+  document.getElementById('port-gain').textContent=(totalGain>=0?'+':'')+' $'+Math.abs(totalGain).toFixed(0);
+  document.getElementById('port-gain').style.color=totalGain>=0?'var(--g2)':'var(--r1)';
+  document.getElementById('port-cnt').textContent=portfolio.length;
+  document.getElementById('port-list').innerHTML=rows||'<div class="es">// NO POSITIONS — USE ◆ ON STOCKS TAB OR ADD ABOVE</div>';
+}
+
+// ═══════════════════════════════════════════
+// NEWS
+// ═══════════════════════════════════════════
+const NEWS_POOL=[
+  {h:'Fed signals one rate cut remaining for 2025 as inflation cools to 2.8%',cat:'macro',src:'Reuters',age:'12m ago'},
+  {h:'NVIDIA surpasses $2T market cap on record data center revenue',cat:'markets',src:'Bloomberg',age:'34m ago'},
+  {h:'Bitcoin consolidates near $67K ahead of institutional ETF inflows',cat:'crypto',src:'CoinDesk',age:'1h ago'},
+  {h:'Apple unveils AI-native chip architecture for next iPhone generation',cat:'tech',src:'WSJ',age:'2h ago'},
+  {h:'Oil prices dip 1.4% as OPEC+ signals output increase discussions',cat:'energy',src:'FT',age:'2h ago'},
+  {h:'Tesla cuts Model Y prices in Europe amid EV demand slowdown',cat:'markets',src:'Bloomberg',age:'3h ago'},
+  {h:'Meta Llama 4 benchmarks outperform GPT-4o on coding tasks',cat:'tech',src:'TechCrunch',age:'4h ago'},
+  {h:'JP Morgan raises S&P 500 year-end target to 6,100 on earnings momentum',cat:'markets',src:'CNBC',age:'4h ago'},
+  {h:'Pfizer announces Phase 3 data showing 78% efficacy in oncology trial',cat:'health',src:'Reuters',age:'5h ago'},
+  {h:'China GDP beats estimates at 5.3%, lifting Asia markets',cat:'macro',src:'FT',age:'5h ago'},
+  {h:'Ethereum ETF sees $340M inflows in single session — record high',cat:'crypto',src:'CoinDesk',age:'6h ago'},
+  {h:'Amazon AWS launches quantum computing cluster for enterprise clients',cat:'tech',src:'WSJ',age:'7h ago'},
+  {h:'Microsoft Azure revenue up 33% YoY driven by Copilot subscriptions',cat:'tech',src:'Bloomberg',age:'8h ago'},
+  {h:'Goldman Sachs predicts two Fed cuts by Q1 2026 in latest note',cat:'macro',src:'Reuters',age:'9h ago'},
+  {h:'US jobless claims fall to 201K — lowest since Jan 2023',cat:'macro',src:'AP',age:'10h ago'},
+  {h:'Solana hits 65K TPS milestone — new throughput record',cat:'crypto',src:'Decrypt',age:'11h ago'},
+  {h:'Disney streaming turns profitable for second consecutive quarter',cat:'markets',src:'FT',age:'12h ago'},
+  {h:'ExxonMobil announces $5B buyback amid strong energy margins',cat:'energy',src:'Reuters',age:'13h ago'},
+];
+function shuffleNews(){newsData=[...NEWS_POOL].sort(()=>Math.random()-0.5);}
+function renderNews(targetId,limit){
+  const filter=document.getElementById('news-filter')?.value||'all';
+  const el=document.getElementById(targetId);if(!el)return;
+  const items=newsData.filter(n=>filter==='all'||n.cat===filter).slice(0,limit||newsData.length);
+  el.innerHTML=items.map(n=>`
+    <div class="news-item">
+      <div class="news-hl">${n.h}</div>
+      <div class="news-meta"><span class="cat-${n.cat}">[${n.cat.toUpperCase()}]</span><span class="news-src" style="color:var(--g3)">${n.src}</span><span>${n.age}</span></div>
+    </div>`).join('')||'<div class="es">// NO INTEL FOR FILTER</div>';
+}
+
+// ═══════════════════════════════════════════
+// WEATHER (Open-Meteo — free, no API key)
+// ═══════════════════════════════════════════
+const WMO_CODES={0:'Clear',1:'Mainly Clear',2:'Partly Cloudy',3:'Overcast',45:'Foggy',48:'Icy Fog',51:'Light Drizzle',53:'Drizzle',55:'Heavy Drizzle',61:'Light Rain',63:'Rain',65:'Heavy Rain',71:'Light Snow',73:'Snow',75:'Heavy Snow',80:'Showers',81:'Rain Showers',82:'Heavy Showers',95:'Thunderstorm',99:'Severe Storm'};
+const WMO_ICON={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌧️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'❄️',75:'❄️',80:'🌦️',81:'🌧️',82:'⛈️',95:'⛈️',99:'⛈️'};
+function getWIcon(code){return WMO_ICON[code]||'🌡️';}
+function getWDesc(code){return WMO_CODES[code]||'Unknown';}
+
+async function geocodeLocation(name){
+  try{
+    const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=en&format=json`);
+    const d=await r.json();
+    if(d.results&&d.results.length>0){const loc=d.results[0];return{lat:loc.latitude,lon:loc.longitude,name:loc.name+', '+(loc.country_code||'')};}
+  }catch(e){}
+  return null;
+}
+
+async function fetchWeather(){
+  const el=document.getElementById('weather-content');
+  const locInfo=document.getElementById('weather-location-info');
+  el.innerHTML='<div style="font-size:10px;color:var(--text3);text-align:center;padding:20px;">Fetching from Open-Meteo...</div>';
+  locInfo.textContent='LOCATION: '+weatherLoc.name;
+  try{
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${weatherLoc.lat}&longitude=${weatherLoc.lon}&hourly=temperature_2m,weathercode,precipitation_probability&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7`;
+    const res=await fetch(url);const data=await res.json();
+    weatherCache=data;renderWeatherModal(data);
+  }catch(e){el.innerHTML='<div style="font-size:10px;color:var(--r1);text-align:center;padding:20px;">Failed to fetch. Check connection.</div>';}
+}
+
+function renderWeatherModal(data){
+  const el=document.getElementById('weather-content');
+  if(!data||!data.hourly){el.innerHTML='<div style="font-size:10px;color:var(--r1);padding:20px;text-align:center;">No data available.</div>';return;}
+  const now=new Date();const curHour=now.getHours();
+  const hours=data.hourly.time.slice(curHour,curHour+12).map((t,i)=>{
+    const h=parseInt(t.split('T')[1]);const ap=h>=12?'PM':'AM';const h12=h%12||12;
+    return`<div class="wd-cell"><div class="wd-time">${h12}${ap}</div><div class="wd-ico">${getWIcon(data.hourly.weathercode[curHour+i])}</div><div class="wd-temp">${Math.round(data.hourly.temperature_2m[curHour+i])}°F</div><div class="wd-desc">${getWDesc(data.hourly.weathercode[curHour+i])}</div><div style="font-size:8px;color:var(--cy);margin-top:2px;">${data.hourly.precipitation_probability[curHour+i]||0}% 💧</div></div>`;
+  }).join('');
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const weekly=data.daily.time.map((t,i)=>{
+    const dow=days[new Date(t).getDay()];
+    return`<div class="ww-cell"><div class="ww-day">${dow}</div><div class="ww-ico">${getWIcon(data.daily.weathercode[i])}</div><div class="ww-hi">${Math.round(data.daily.temperature_2m_max[i])}°</div><div class="ww-lo">${Math.round(data.daily.temperature_2m_min[i])}°</div><div style="font-size:7px;color:var(--cy);">${data.daily.precipitation_probability_max[i]||0}%</div></div>`;
+  }).join('');
+  el.innerHTML=`
+    <div style="font-size:9px;color:var(--text3);letter-spacing:2px;padding:6px 0 4px 0;">TODAY — HOUR BY HOUR</div>
+    <div class="weather-day">${hours}</div>
+    <div style="font-size:9px;color:var(--text3);letter-spacing:2px;padding:10px 0 4px 0;">7-DAY OUTLOOK</div>
+    <div class="week-weather">${weekly}</div>`;
+}
+
+async function showWeatherModal(){
+  document.getElementById('weather-modal').style.display='flex';
+  if(weatherCache)renderWeatherModal(weatherCache);
+  else await fetchWeather();
+}
+
+async function saveLocation(){
+  const city=(document.getElementById('loc-city').value||'').trim();
+  const state=(document.getElementById('loc-state').value||'').trim();
+  const country=(document.getElementById('loc-country').value||'').trim();
+  const statusEl=document.getElementById('loc-status');
+  if(!city){statusEl.textContent='Enter at least a city name.';return;}
+  const queryParts=[city];
+  if(state)queryParts.push(state);
+  if(country)queryParts.push(country);
+  const query=queryParts.join(', ');
+  statusEl.textContent='GEOCODING: '+query+' ...';
+  const loc=await geocodeLocation(query);
+  if(loc){weatherLoc={name:loc.name,lat:loc.lat,lon:loc.lon};save();weatherCache=null;statusEl.textContent='LOCATION SET: '+loc.name;fetchWeather();}
+  else{statusEl.textContent='LOCATION NOT FOUND. Try a larger city name.';}
+}
+
+// ═══════════════════════════════════════════
+// TODOS
+// ═══════════════════════════════════════════
+function addTodo(){const i=document.getElementById('ti'),p=document.getElementById('tp').value,t=i.value.trim();if(!t)return;todos[curTodo].unshift({id:Date.now(),text:t,pri:p,done:false});i.value='';save();renderTodos();}
+function toggleTodo(m,id){const x=todos[m].find(t=>t.id===id);if(x)x.done=!x.done;save();renderTodos();}
+function delTodo(m,id){todos[m]=todos[m].filter(t=>t.id!==id);save();renderTodos();}
+function renderTodos(){
+  const list=document.getElementById('tlist');
+  const items=[...todos[curTodo]].sort((a,b)=>a.done!==b.done?(a.done?1:-1):({high:0,med:1,low:2}[a.pri]-{high:0,med:1,low:2}[b.pri]));
+  list.innerHTML=items.length?items.map(t=>`<div class="itm"><div class="chk ${t.done?'on':''}" onclick="toggleTodo('${curTodo}',${t.id})"></div><span class="itxt ${t.done?'dn':''}">${t.text}</span><span class="bdg b${t.pri[0]}">${t.pri.toUpperCase()}</span><button class="dbt" onclick="delTodo('${curTodo}',${t.id})">X</button></div>`).join(''):'<div class="es">// NO ACTIVE DIRECTIVES</div>';
+  const all=[...todos.short,...todos.long];
+  document.getElementById('tc-tag').textContent=all.filter(t=>!t.done).length+' ACTIVE';
+  const cur=todos[curTodo];const dn=cur.filter(t=>t.done).length;
+  document.getElementById('st-t').textContent=cur.length;
+  document.getElementById('st-d').textContent=dn;
+  document.getElementById('st-p').textContent=cur.length-dn;
+}
+
+// ═══════════════════════════════════════════
+// WEIGHT
+// ═══════════════════════════════════════════
+function setGoal(){const g=parseFloat(document.getElementById('wgl').value);if(isNaN(g)||g<50||g>700)return;wgoal=g;document.getElementById('wgl').value='';save();renderWeight();}
+function addW(){const i=document.getElementById('win'),dt=document.getElementById('wdt').value,v=parseFloat(i.value);if(isNaN(v)||v<50||v>700)return;const date=dt||tod();const ei=weights.findIndex(w=>w.date===date);if(ei>=0)weights[ei].val=v;else weights.push({date,val:v});weights.sort((a,b)=>a.date.localeCompare(b.date));i.value='';save();renderWeight();setTimeout(renderWChart,60);}
+function delW(date){weights=weights.filter(w=>w.date!==date);save();renderWeight();setTimeout(renderWChart,60);}
+function calcNut(w){
+  if(!w)return;const kg=w*0.453592;const cal=Math.round(kg*22);const pro=Math.round(kg*2.2);const carb=Math.round(cal*0.35/4);const fat=Math.round(cal*0.25/9);
+  document.getElementById('n-cal').textContent=cal;document.getElementById('n-pro').textContent=pro;document.getElementById('n-carb').textContent=carb;document.getElementById('n-fat').textContent=fat;document.getElementById('n-fib').textContent=30;document.getElementById('n-wat').textContent=Math.round(w*0.67);
+  document.getElementById('np-cal').style.width='70%';document.getElementById('np-pro').style.width=Math.min(pro/250*100,100)+'%';document.getElementById('np-carb').style.width=Math.min(carb/300*100,100)+'%';document.getElementById('np-fat').style.width=Math.min(fat/80*100,100)+'%';document.getElementById('np-fib').style.width='60%';document.getElementById('np-wat').style.width=Math.min(Math.round(w*0.67)/120*100,100)+'%';
+}
+function calcPred(){
+  const pb=document.getElementById('pred'),pv=document.getElementById('pred-val');
+  if(!wgoal||weights.length<3){pb.style.display='none';return;}
+  const s=[...weights].sort((a,b)=>a.date.localeCompare(b.date));const n=s.length;
+  let sx=0,sy=0,sxy=0,sx2=0;const t0=new Date(s[0].date).getTime();
+  s.forEach(w=>{const x=(new Date(w.date).getTime()-t0)/86400000;sx+=x;sy+=w.val;sxy+=x*w.val;sx2+=x*x;});
+  const m=(n*sxy-sx*sy)/(n*sx2-sx*sx);const b=(sy-m*sx)/n;
+  if(Math.abs(m)<0.001){pv.textContent='Weight stable — keep logging daily.';pb.style.display='block';return;}
+  if(m>0&&s[n-1].val>wgoal){pv.textContent='Currently gaining weight — reverse trend to project goal.';pb.style.display='block';return;}
+  const daysNeeded=(wgoal-b)/m;const target=new Date(t0+daysNeeded*86400000);const dl=Math.round((target-new Date())/86400000);
+  if(dl<0||dl>3650){pv.textContent='Insufficient data variation — log more entries.';pb.style.display='block';return;}
+  pv.textContent='Rate: '+Math.abs(m*7).toFixed(1)+' lbs/wk → Goal '+wgoal+' lbs on '+target.toISOString().split('T')[0]+' ('+dl+' days away)';
+  pb.style.display='block';
+}
+function renderWeight(){
+  document.getElementById('we-tag').textContent=weights.length+' ENTRIES';
+  if(!weights.length){document.getElementById('wlog').innerHTML='<div class="es">// NO DATA LOGGED</div>';return;}
+  const last=weights[weights.length-1];
+  document.getElementById('wc').innerHTML=last.val.toFixed(1)+'<span class="su">lbs</span>';
+  document.getElementById('wg').innerHTML=(wgoal?wgoal.toFixed(1):'--')+(wgoal?'<span class="su">lbs</span>':'');
+  if(wgoal){const rem=last.val-wgoal;document.getElementById('wrm').textContent=(rem>0?'':'')+Math.abs(rem).toFixed(1)+' to go';document.getElementById('wrm').style.color=rem>0?'var(--a1)':'var(--g2)';}
+  const ago=new Date();ago.setDate(ago.getDate()-30);const old=weights.find(w=>new Date(w.date)<=ago);
+  if(old){const d=last.val-old.val;document.getElementById('wch').textContent=(d>0?'+':'')+d.toFixed(1)+' lbs';document.getElementById('wch').style.color=d>0?'var(--r1)':'var(--g2)';}
+  else{document.getElementById('wch').textContent='--';}
+  calcNut(last.val);calcPred();
+  const sr=[...weights].reverse();
+  document.getElementById('wlog').innerHTML=sr.map((w,i)=>{const pv=sr[i+1];const diff=pv?(w.val-pv.val):null;let dh='';if(diff!==null){dh=`<span class="${diff>0?'lup':'ldn'}">${diff>0?'+':''}${diff.toFixed(1)}</span>`;}
+  return`<div class="lr"><span class="ld">${w.date}</span><span class="lv">${w.val.toFixed(1)} lbs</span>${dh}<button class="dbt" style="margin-left:6px" onclick="delW('${w.date}')">X</button></div>`;}).join('');
+}
+function renderWChart(){
+  const canvas=document.getElementById('wchart');if(!canvas)return;
+  if(wChart){wChart.destroy();wChart=null;}
+  if(weights.length<2)return;
+  const labels=weights.map(w=>w.date.slice(5));const data=weights.map(w=>w.val);
+  const mn=Math.min(...data),mx=Math.max(...data);
+  const ds=[{data,borderColor:'#00ff41',backgroundColor:'rgba(0,255,65,0.04)',borderWidth:1.5,pointRadius:2,tension:0.3,fill:true,pointBackgroundColor:'#00ff41',label:'W'}];
+  if(wgoal)ds.push({data:weights.map(()=>wgoal),borderColor:'#ffaa00',borderWidth:1,borderDash:[4,3],pointRadius:0,fill:false,label:'G'});
+  wChart=new Chart(canvas,{type:'line',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#010a01',borderColor:'#0a2a0a',borderWidth:1,titleColor:'#005010',bodyColor:'#00ff41',titleFont:{family:'JetBrains Mono',size:9},bodyFont:{family:'JetBrains Mono',size:11}}},scales:{x:{grid:{color:'rgba(0,255,65,0.04)'},ticks:{color:'#005010',font:{family:'JetBrains Mono',size:8},maxTicksLimit:8}},y:{grid:{color:'rgba(0,255,65,0.04)'},ticks:{color:'#005010',font:{family:'JetBrains Mono',size:8}},min:Math.floor(Math.min(mn,wgoal||mn))-2,max:Math.ceil(Math.max(mx,wgoal||mx))+2}}}});
+}
+
+// ═══════════════════════════════════════════
+// HABITS
+// ═══════════════════════════════════════════
+function getWk(){const d=[];for(let i=6;i>=0;i--){const x=new Date();x.setDate(x.getDate()-i);d.push(x.toISOString().split('T')[0]);}return d;}
+function streak(h){let s=0,d=new Date();while(true){const k=d.toISOString().split('T')[0];if(h.log[k]){s++;d.setDate(d.getDate()-1);}else break;}return s;}
+function addHabit(){const i=document.getElementById('hi'),n=i.value.trim();if(!n)return;habits.push({id:Date.now(),name:n,log:{}});i.value='';save();renderHabits();}
+function togH(id,date){const h=habits.find(h=>h.id===id);if(!h)return;h.log[date]=!h.log[date];save();renderHabits();}
+function delH(id){habits=habits.filter(h=>h.id!==id);save();renderHabits();}
+function renderHabits(){
+  const wk=getWk();const today=tod();const days=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  document.getElementById('h-hdr').innerHTML='<div class="hnc">HABIT</div>'+wk.map(d=>`<div class="dl ${d===today?'td':''}">${days[new Date(d+'T12:00:00').getDay()]}<br><span style="font-size:7px">${d.slice(8)}</span></div>`).join('')+'<div style="min-width:36px;font-size:7px;color:var(--text3);text-align:right;">STRK</div>';
+  document.getElementById('hlist').innerHTML=habits.length?habits.map(h=>{const st=streak(h);return`<div class="hrow"><div class="hrn">${h.name}</div>${wk.map(d=>`<div class="hc ${h.log[d]?'on':''} ${d===today?'td':''}" onclick="togH(${h.id},'${d}')"></div>`).join('')}<div class="stk ${st>=7?'hot':''}" style="min-width:36px;text-align:right;">${st>0?'×'+st:'--'}</div><button class="dbt" style="margin-left:4px" onclick="delH(${h.id})">X</button></div>`;}).join(''):'<div class="es">// NO HABITS TRACKED</div>';
+  const td=habits.filter(h=>h.log[today]).length;const pct=habits.length?Math.round(td/habits.length*100):0;
+  document.getElementById('hpr').style.width=pct+'%';
+  document.getElementById('hpct').textContent=pct+'% TODAY';
+  document.getElementById('ht-t').textContent=habits.length;
+  document.getElementById('ht-d').textContent=td;
+  document.getElementById('ht-s').textContent=habits.length?Math.max(...habits.map(h=>streak(h))):0;
+}
+
+// ═══════════════════════════════════════════
+// VAULT
+// ═══════════════════════════════════════════
+function toMo(a,f){return f==='monthly'?a:f==='biweekly'?a*2.17:f==='weekly'?a*4.33:a/12;}
+function addInc(){const n=document.getElementById('ii-n').value.trim(),a=parseFloat(document.getElementById('ii-a').value),f=document.getElementById('ii-f').value;if(!n||isNaN(a)||a<=0)return;incomes.push({id:Date.now(),name:n,amt:a,freq:f});document.getElementById('ii-n').value='';document.getElementById('ii-a').value='';save();renderVault();}
+function delInc(id){incomes=incomes.filter(i=>i.id!==id);save();renderVault();}
+function addSub(){const n=document.getElementById('si-n').value.trim(),a=parseFloat(document.getElementById('si-a').value);if(!n||isNaN(a)||a<=0)return;subs.push({id:Date.now(),name:n,amt:a});document.getElementById('si-n').value='';document.getElementById('si-a').value='';save();renderVault();}
+function delSub(id){subs=subs.filter(s=>s.id!==id);save();renderVault();}
+function addBudget(){const n=document.getElementById('bi-n').value.trim(),b=parseFloat(document.getElementById('bi-b').value),sp=parseFloat(document.getElementById('bi-s').value)||0;if(!n||isNaN(b)||b<=0)return;budgets.push({id:Date.now(),name:n,budget:b,spent:sp});document.getElementById('bi-n').value='';document.getElementById('bi-b').value='';document.getElementById('bi-s').value='';save();renderVault();}
+function delBud(id){budgets=budgets.filter(b=>b.id!==id);save();renderVault();}
+function addTx(){const d=document.getElementById('tx-d').value.trim(),a=parseFloat(document.getElementById('tx-a').value),ty=document.getElementById('tx-t').value,c=document.getElementById('tx-c').value.trim();if(!d||isNaN(a)||a<=0)return;txs.unshift({id:Date.now(),desc:d,amt:a,type:ty,cat:c,date:tod()});document.getElementById('tx-d').value='';document.getElementById('tx-a').value='';save();renderVault();}
+function delTx(id){txs=txs.filter(t=>t.id!==id);save();renderVault();}
+function renderVault(){
+  const tI=incomes.reduce((s,i)=>s+toMo(i.amt,i.freq),0);
+  const tS=subs.reduce((s,x)=>s+x.amt,0);
+  const tSp=budgets.reduce((s,b)=>s+b.spent,0)+tS;
+  const lft=tI-tSp;
+  document.getElementById('v-in').textContent='$'+tI.toFixed(0);
+  document.getElementById('v-sp').textContent='$'+tSp.toFixed(0);
+  document.getElementById('v-sb').textContent='$'+tS.toFixed(0);
+  document.getElementById('v-lf').textContent='$'+lft.toFixed(0);
+  document.getElementById('v-lf').style.color=lft>=0?'var(--cy)':'var(--r1)';
+  document.getElementById('ilist').innerHTML=incomes.length?incomes.map(i=>`<div class="itm"><span class="itxt">${i.name}</span><span class="fa p">$${toMo(i.amt,i.freq).toFixed(0)}/mo</span><button class="dbt" onclick="delInc(${i.id})">X</button></div>`).join(''):'<div class="es">// NONE</div>';
+  document.getElementById('itot').textContent='$'+tI.toFixed(2);
+  document.getElementById('slist').innerHTML=subs.length?subs.map(s=>`<div class="itm"><span class="itxt">${s.name}</span><span class="fa" style="color:var(--pu)">$${s.amt.toFixed(2)}/mo</span><button class="dbt" onclick="delSub(${s.id})">X</button></div>`).join(''):'<div class="es">// NONE</div>';
+  document.getElementById('stot').textContent='$'+tS.toFixed(2);
+  const ap=tI>0?Math.round(budgets.reduce((s,b)=>s+b.budget,0)/tI*100):0;
+  document.getElementById('bz-tag').textContent=ap+'% ALLOCATED';
+  document.getElementById('blist').innerHTML=budgets.length?budgets.map(b=>{const pct=Math.min(b.budget>0?b.spent/b.budget*100:0,100);const ov=b.spent>b.budget;const bc=ov?'var(--r1)':pct>75?'var(--a1)':'var(--g2)';return`<div class="itm" style="flex-direction:column;align-items:stretch;gap:3px"><div style="display:flex;align-items:center;gap:6px"><span class="itxt">${b.name}</span><span class="fa ${ov?'n':'p'}">$${b.spent.toFixed(0)}/$${b.budget.toFixed(0)}</span><button class="dbt" onclick="delBud(${b.id})">X</button></div><div class="bb"><div class="bf" style="width:${pct}%;background:${bc}"></div></div></div>`;}).join(''):'<div class="es">// NO SPENDING ZONES</div>';
+  document.getElementById('txlist').innerHTML=txs.length?txs.slice(0,40).map(t=>`<div class="lr"><span class="ld">${t.date}</span><span class="itxt" style="flex:1;font-size:11px;margin-right:6px">${t.desc}${t.cat?' ['+t.cat+']':''}</span><span class="fa ${t.type==='income'?'p':'n'}">${t.type==='income'?'+':'-'}$${t.amt.toFixed(2)}</span><button class="dbt" onclick="delTx(${t.id})">X</button></div>`).join(''):'<div class="es">// NO TRANSACTIONS</div>';
+}
+
+// ═══════════════════════════════════════════
+// CALENDAR
+// ═══════════════════════════════════════════
+function updateEvColorPreview(){
+  const sel=document.getElementById('ev-color');
+  const dot=document.getElementById('ev-color-dot');
+  if(sel&&dot)dot.style.background=sel.value;
+}
+function generateRepeatDates(startDate,repeat,untilDate){
+  const dates=[];
+  if(repeat==='none')return[startDate];
+  const start=new Date(startDate+'T12:00:00');
+  const until=untilDate?new Date(untilDate+'T12:00:00'):new Date(start.getTime()+365*24*60*60*1000);
+  let cur=new Date(start);
+  while(cur<=until&&dates.length<200){
+    dates.push(cur.toISOString().split('T')[0]);
+    if(repeat==='daily')cur.setDate(cur.getDate()+1);
+    else if(repeat==='weekly')cur.setDate(cur.getDate()+7);
+    else if(repeat==='biweekly')cur.setDate(cur.getDate()+14);
+    else if(repeat==='monthly')cur.setMonth(cur.getMonth()+1);
+    else if(repeat==='yearly')cur.setFullYear(cur.getFullYear()+1);
+    else break;
+  }
+  return dates;
+}
+function addEvent(){
+  const d=document.getElementById('ev-date').value,t=document.getElementById('ev-title').value.trim(),tm=document.getElementById('ev-time').value,c=document.getElementById('ev-color').value;
+  const repeat=document.getElementById('ev-repeat').value;
+  const repeatEnd=document.getElementById('ev-repeat-end').value;
+  if(!d||!t)return;
+  const repeatId=repeat!=='none'?Date.now():null;
+  const dates=generateRepeatDates(d,repeat,repeatEnd);
+  dates.forEach((date,i)=>{events.push({id:Date.now()+i,date,title:t,time:tm,color:c,repeat,repeatId});});
+  events.sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+  document.getElementById('ev-title').value='';
+  document.getElementById('ev-repeat').value='none';
+  document.getElementById('ev-repeat-end').value='';
+  save();renderCalendar();renderEventList();
+}
+function addEventFromModal(){
+  const d=document.getElementById('modal-ev-date').value,t=document.getElementById('modal-ev-title').value.trim(),tm=document.getElementById('modal-ev-time').value,c=document.getElementById('modal-ev-color').value;
+  const repeat=document.getElementById('modal-ev-repeat').value;
+  const repeatEnd=document.getElementById('modal-ev-repeat-end').value;
+  if(!d||!t)return;
+  const dates=generateRepeatDates(d,repeat,repeatEnd);
+  const repeatId=repeat!=='none'?Date.now():null;
+  dates.forEach((date,i)=>{events.push({id:Date.now()+i,date,title:t,time:tm,color:c,repeat,repeatId});});
+  events.sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('modal-ev-title').value='';
+  document.getElementById('modal-ev-repeat').value='none';
+  document.getElementById('modal-ev-repeat-end').value='';
+  save();renderCalendar();renderEventList();
+  document.getElementById('cal-modal').style.display='none';
+}
+function delEvent(id,repeatId){
+  if(repeatId&&events.filter(e=>e.repeatId===repeatId).length>1){
+    const choice=confirm('Delete ALL occurrences in this repeat series?\nOK = delete all, Cancel = delete just this one');
+    if(choice){events=events.filter(e=>e.repeatId!==repeatId);}
+    else{events=events.filter(e=>e.id!==id);}
+  } else {
+    events=events.filter(e=>e.id!==id);
+  }
+  save();renderCalendar();renderEventList();
+}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+function renderCalendar(){
+  const months=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+  document.getElementById('cal-title').textContent=months[calMonth]+' '+calYear;
+  const headEl=document.getElementById('cal-head');
+  const days=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  headEl.innerHTML=days.map(d=>`<div class="cal-head" style="border-bottom:1px solid var(--b1);">${d}</div>`).join('');
+  const bodyEl=document.getElementById('cal-body');
+  const first=new Date(calYear,calMonth,1).getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const daysInPrev=new Date(calYear,calMonth,0).getDate();
+  const todayStr=tod();let cells='';
+  let cellCount=0;
+  for(let i=0;i<first;i++){const d=daysInPrev-first+1+i;cells+=dayCell(calYear-+(calMonth===0),calMonth===0?11:calMonth-1,d,todayStr,true);cellCount++;}
+  for(let i=1;i<=daysInMonth;i++){cells+=dayCell(calYear,calMonth,i,todayStr,false);cellCount++;}
+  let nextDay=1;while(cellCount%7!==0){cells+=dayCell(calYear,calMonth===11?calYear+1:calYear,calMonth===11?0:calMonth+1,nextDay++,todayStr,true);cellCount++;}
+  bodyEl.innerHTML=cells;
+  renderEventList();
+}
+function dayCell(y,m,d,todayStr,other){
+  const dateStr=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  const isToday=dateStr===todayStr;
+  const dayEvents=events.filter(e=>e.date===dateStr);
+  const evHtml=dayEvents.slice(0,2).map(e=>`<div class="cal-event" style="background:${e.color}22;color:${e.color};border-left:2px solid ${e.color}">${e.time?e.time.slice(0,5)+' ':''}<span style='font-size:7px;'>${e.title.slice(0,10)}</span></div>`).join('');
+  const more=dayEvents.length>2?`<div style="font-size:7px;color:var(--text3);">+${dayEvents.length-2}</div>`:'';
+  return`<div class="cal-day ${isToday?'today':''} ${other?'other-month':''}" onclick="openCalModal('${dateStr}')"><div class="dn">${d}</div>${evHtml}${more}</div>`;
+}
+function openCalModal(dateStr){
+  document.getElementById('modal-ev-date').value=dateStr;
+  document.getElementById('modal-ev-title').value='';
+  document.getElementById('cal-modal').style.display='flex';
+}
+function renderEventList(){
+  const el=document.getElementById('ev-list');if(!el)return;
+  const today=tod();const upcoming=events.filter(e=>e.date>=today).slice(0,20);
+  el.innerHTML=upcoming.length?upcoming.map(e=>`<div class="itm"><div style="width:4px;height:28px;background:${e.color};flex-shrink:0;margin-right:6px;"></div><div style="flex:1;"><div style="font-size:11px;font-weight:500;color:${e.color}">${e.title}</div><div style="font-size:9px;color:var(--text3);">${e.date}${e.time?' at '+e.time:''}${e.repeat&&e.repeat!=='none'?' · ↻'+e.repeat:''}</div></div><button class="dbt" onclick="delEvent(${e.id},${e.repeatId||'null'})">X</button></div>`).join(''):'<div class="es">// NO UPCOMING EVENTS</div>';
+}
+
+// ═══════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════
+function renderHome(){
+  renderMarketBar('home-mkt');
+  const all=[...todos.short,...todos.long];const pending=all.filter(t=>!t.done).length;
+  const today=tod();const hDone=habits.filter(h=>h.log[today]).length;
+  const curW=weights.length?weights[weights.length-1].val:null;
+  const tI=incomes.reduce((s,i)=>s+toMo(i.amt,i.freq),0);
+  const tS=subs.reduce((s,x)=>s+x.amt,0);const tSp=budgets.reduce((s,b)=>s+b.spent,0)+tS;const lft=tI-tSp;
+  const topStock=Object.entries(stockData).filter(([s])=>pinnedStocks.includes(s))[0];
+  const portVal=portfolio.reduce((s,p)=>{const d=stockData[p.sym];return s+(d?d.price*p.qty:0);},0);
+  const nextEv=events.find(e=>e.date>=today);
+  const cards=[
+    {ico:'[>>]',title:'TASK_MATRIX',stat:pending+' PENDING',sub:all.length+' total · '+todos.short.filter(t=>!t.done).length+' short term',tab:'todo',c:'var(--g1)'},
+    {ico:'[##]',title:'HABIT_ENGINE',stat:hDone+'/'+habits.length,sub:'completed today · '+habits.filter(h=>streak(h)>=7).length+' hot streaks',tab:'habits',c:'var(--cy)'},
+    {ico:'[**]',title:'WEIGHT_PROTOCOL',stat:curW?curW.toFixed(1)+' lbs':'NO DATA',sub:wgoal?'goal: '+wgoal+' lbs':'no goal set',tab:'weight',c:'var(--a1)'},
+    {ico:'[$$$]',title:'VAULT_STATUS',stat:'$'+lft.toFixed(0),sub:'remaining · $'+tI.toFixed(0)+' income/mo',tab:'vault',c:lft>=0?'var(--g2)':'var(--r1)'},
+    {ico:'[◆]',title:'PORTFOLIO',stat:'$'+portVal.toFixed(0),sub:portfolio.length+' positions · '+pinnedStocks.length+' pinned',tab:'portfolio',c:'var(--cy)'},
+    {ico:'[!!]',title:'NEXT_EVENT',stat:nextEv?nextEv.title:'CLEAR',sub:nextEv?nextEv.date+(nextEv.time?' at '+nextEv.time:''):'no upcoming events',tab:'calendar',c:'var(--pu)'},
+  ];
+  document.getElementById('home-grid').innerHTML=cards.map(c=>`<div class="hcard" onclick="navTo('${c.tab}')"><div class="hcard-ico" style="color:${c.c}">${c.ico}</div><div class="hcard-title">${c.title}</div><div class="hcard-stat" style="color:${c.c}">${c.stat}</div><div class="hcard-sub">${c.sub}</div></div>`).join('');
+  renderNews('home-news',5);
+}
+function navTo(tab){const btn=document.querySelector(`.nb[onclick*="'${tab}'"]`);if(btn)sw(tab,btn);}
+
+// ═══════════════════════════════════════════
+// NEXAI — SMART LOCAL ENGINE (no API key needed)
+// ═══════════════════════════════════════════
+
+function getNexaiData(){
+  const today=tod();
+  const all=[...todos.short,...todos.long];
+  const pending=all.filter(t=>!t.done);
+  const done=all.filter(t=>t.done);
+  const hToday=habits.filter(h=>h.log[today]);
+  const hMissed=habits.filter(h=>!h.log[today]);
+  const tI=incomes.reduce((s,i)=>s+toMo(i.amt,i.freq),0);
+  const tS=subs.reduce((s,x)=>s+x.amt,0);
+  const tSp=budgets.reduce((s,b)=>s+b.spent,0)+tS;
+  const remaining=tI-tSp;
+  const curW=weights.length?weights[weights.length-1]:null;
+  const portVal=portfolio.reduce((s,p)=>{const d=stockData[p.sym];return s+(d?d.price*p.qty:0);},0);
+  const portCost=portfolio.reduce((s,p)=>s+(p.cost*p.qty),0);
+  const portGain=portVal-portCost;
+  const upEv=events.filter(e=>e.date>=today).slice(0,15);
+  const topGainers=Object.entries(stockData).filter(([s])=>s!=='SPY'&&s!=='QQQ').sort((a,b)=>b[1].chgPct-a[1].chgPct).slice(0,3);
+  const topLosers=Object.entries(stockData).filter(([s])=>s!=='SPY'&&s!=='QQQ').sort((a,b)=>a[1].chgPct-b[1].chgPct).slice(0,3);
+  const streaks=habits.map(h=>({name:h.name,s:streak(h)})).sort((a,b)=>b.s-a.s);
+  const weightTrend=weights.length>=2?(weights[weights.length-1].val-weights[weights.length-2].val):null;
+  return {today,all,pending,done,hToday,hMissed,tI,tS,tSp,remaining,curW,portVal,portCost,portGain,upEv,topGainers,topLosers,streaks,weightTrend};
+}
+
+function getDayName(dateStr){
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  return days[new Date(dateStr+'T12:00:00').getDay()];
+}
+function getDaysUntil(dateStr){
+  const today=new Date(tod()+'T00:00:00');
+  const target=new Date(dateStr+'T00:00:00');
+  return Math.round((target-today)/(1000*60*60*24));
+}
+function fmtAmt(n){return'$'+Math.abs(n).toFixed(2);}
+function pctColor(v){return v>=0?'▲':'▼';}
+
+function nexaiThink(q){
+  const d=getNexaiData();
+  const ql=q.toLowerCase();
+
+  // ── GREETINGS ──────────────────────────────────────────────
+  if(/^(hi|hello|hey|sup|yo|what's up|whats up|howdy)/.test(ql)){
+    const hour=new Date().getHours();
+    const greet=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
+    const lines=[`${greet}. NEXAI online.`];
+    if(d.pending.length)lines.push(`You have ${d.pending.length} pending task${d.pending.length>1?'s':''}.`);
+    if(d.hToday.length<habits.length&&habits.length>0)lines.push(`${d.hMissed.length} habit${d.hMissed.length>1?'s':''} still need checking today.`);
+    if(d.upEv.length)lines.push(`Next event: ${d.upEv[0].title} on ${d.upEv[0].date}.`);
+    return lines.join(' ');
+  }
+
+  // ── HELP ───────────────────────────────────────────────────
+  if(/help|what can you|what do you know|commands/.test(ql)){
+    return `NEXAI can answer questions about all your data. Try:
+► "am I free on Friday?" or "what's on my calendar this week?"
+► "how much money do I have?" or "what are my subscriptions?"
+► "is my NVDA up?" or "how's my portfolio?"
+► "what habits did I miss today?" or "what's my best streak?"
+► "what's my weight goal?" or "how far am I from my goal?"
+► "what tasks are pending?" or "show me high priority tasks"
+► "what should I eat today?" (nutrition targets)
+► "summary" for a full daily briefing`;
+  }
+
+  // ── DAILY SUMMARY / BRIEFING ───────────────────────────────
+  if(/summary|briefing|daily|overview|status|report|rundown/.test(ql)){
+    const lines=[`── NEXVAULT DAILY BRIEFING · ${d.today} ──`];
+    lines.push(`
+TASKS: ${d.pending.length} pending, ${d.done.length} done`);
+    if(d.pending.length){const top=d.pending.filter(t=>t.pri==='high').slice(0,3);if(top.length)lines.push('  High priority: '+top.map(t=>t.text).join(' | '));}
+    lines.push(`
+HABITS: ${d.hToday.length}/${habits.length} done today`);
+    if(d.hMissed.length)lines.push('  Remaining: '+d.hMissed.map(h=>h.name).join(', '));
+    if(d.streaks.length)lines.push('  Best streak: '+d.streaks[0].name+' ×'+d.streaks[0].s+' days');
+    if(d.curW)lines.push(`
+WEIGHT: ${d.curW.val} lbs${wgoal?' — '+(d.curW.val-wgoal).toFixed(1)+' from goal':''}`);
+    lines.push(`
+VAULT: $${d.tI.toFixed(0)} in / $${d.tSp.toFixed(0)} out / $${d.remaining.toFixed(0)} remaining`);
+    if(d.portVal>0)lines.push(`PORTFOLIO: $${d.portVal.toFixed(2)} (${d.portGain>=0?'+':''}$${d.portGain.toFixed(2)})`);
+    if(d.upEv.length)lines.push(`
+NEXT EVENT: ${d.upEv[0].title} · ${d.upEv[0].date}${d.upEv[0].time?' at '+d.upEv[0].time:''}`);
+    lines.push(`
+For weather: tap the yellow button in the top bar.`);
+    return lines.join('\n');
+  }
+
+  // ── CALENDAR / FREE TIME ───────────────────────────────────
+  if(/free|busy|schedule|calendar|event|appointment|meeting|plan/.test(ql)){
+    // specific date mentioned?
+    const dayNames=['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    const matchDay=dayNames.find(dn=>ql.includes(dn));
+    if(matchDay){
+      const today=new Date(d.today+'T12:00:00');
+      const curDow=today.getDay();
+      const targetDow=dayNames.indexOf(matchDay)+1===7?0:dayNames.indexOf(matchDay)+1;
+      let diff=targetDow-curDow;if(diff<=0)diff+=7;
+      const targetDate=new Date(today);targetDate.setDate(today.getDate()+diff);
+      const ds=targetDate.toISOString().split('T')[0];
+      const evs=events.filter(e=>e.date===ds);
+      if(evs.length===0)return `You appear FREE on ${matchDay.charAt(0).toUpperCase()+matchDay.slice(1)} (${ds}). No events scheduled.`;
+      return `${matchDay.charAt(0).toUpperCase()+matchDay.slice(1)} (${ds}) has ${evs.length} event${evs.length>1?'s':''}:
+`+evs.map(e=>`► ${e.title}${e.time?' at '+e.time:''}`).join('\n');
+    }
+    // "this week"
+    if(/this week|week/.test(ql)){
+      const today=new Date(d.today+'T00:00:00');
+      const weekEnd=new Date(today);weekEnd.setDate(today.getDate()+7);
+      const weekStr=weekEnd.toISOString().split('T')[0];
+      const evs=events.filter(e=>e.date>=d.today&&e.date<weekStr);
+      if(!evs.length)return `Your calendar is clear this week. No events scheduled.`;
+      return `This week you have ${evs.length} event${evs.length>1?'s':''}:
+`+evs.map(e=>`► ${e.date} ${getDayName(e.date).slice(0,3)} — ${e.title}${e.time?' at '+e.time:''}`).join('\n');
+    }
+    // "today"
+    if(/today/.test(ql)){
+      const evs=events.filter(e=>e.date===d.today);
+      if(!evs.length)return `Nothing scheduled for today (${d.today}). You're free.`;
+      return `Today's events:
+`+evs.map(e=>`► ${e.title}${e.time?' at '+e.time:''}`).join('\n');
+    }
+    // "tomorrow"
+    if(/tomorrow/.test(ql)){
+      const tom=new Date(d.today+'T12:00:00');tom.setDate(tom.getDate()+1);
+      const ts=tom.toISOString().split('T')[0];
+      const evs=events.filter(e=>e.date===ts);
+      if(!evs.length)return `Nothing scheduled for tomorrow (${ts}). You're free.`;
+      return `Tomorrow's events:
+`+evs.map(e=>`► ${e.title}${e.time?' at '+e.time:''}`).join('\n');
+    }
+    // next event
+    if(d.upEv.length===0)return `No upcoming events in your calendar. You're all clear.`;
+    const dtu=getDaysUntil(d.upEv[0].date);
+    const lines=[`Upcoming events:`];
+    d.upEv.slice(0,5).forEach(e=>{const dt=getDaysUntil(e.date);lines.push(`► ${e.date} (${dt===0?'today':dt===1?'tomorrow':'in '+dt+' days'}) — ${e.title}${e.time?' at '+e.time:''}`)});
+    return lines.join('\n');
+  }
+
+  // ── TASKS ──────────────────────────────────────────────────
+  if(/task|todo|to.do|pending|complete|done|directive/.test(ql)){
+    if(/high|urgent|priority/.test(ql)){
+      const hp=d.pending.filter(t=>t.pri==='high');
+      if(!hp.length)return `No high-priority tasks pending. You're clear on urgent directives.`;
+      return `High-priority tasks (${hp.length}):
+`+hp.map(t=>`► ${t.text}`).join('\n');
+    }
+    if(/done|complete|finish/.test(ql)){
+      if(!d.done.length)return `No tasks completed yet.`;
+      return `Completed tasks: ${d.done.length} total.
+Recent: `+d.done.slice(0,5).map(t=>t.text).join(' | ');
+    }
+    if(!d.pending.length)return `No pending tasks. Task matrix is clear.`;
+    const short=todos.short.filter(t=>!t.done);
+    const long=todos.long.filter(t=>!t.done);
+    const lines=[`${d.pending.length} pending tasks:`];
+    if(short.length)lines.push(`Short-term (${short.length}): `+short.slice(0,4).map(t=>t.text).join(' | '));
+    if(long.length)lines.push(`Long-term (${long.length}): `+long.slice(0,4).map(t=>t.text).join(' | '));
+    return lines.join('\n');
+  }
+
+  // ── HABITS ─────────────────────────────────────────────────
+  if(/habit|streak|routine|daily|miss/.test(ql)){
+    if(!habits.length)return `No habits tracked yet. Add them in the HABITS tab.`;
+    if(/miss|skip|not done|incomplete/.test(ql)){
+      if(!d.hMissed.length)return `All ${habits.length} habits completed today. Locked in.`;
+      return `Habits still pending today:
+`+d.hMissed.map(h=>`► ${h.name}`).join('\n');
+    }
+    if(/streak/.test(ql)){
+      const lines=[`Habit streaks:`];
+      d.streaks.forEach(h=>{lines.push(`► ${h.name}: ${h.s>0?'×'+h.s+' days':' no current streak'}${h.s>=7?' 🔥':''}`)});
+      return lines.join('\n');
+    }
+    const lines=[`Habits today: ${d.hToday.length}/${habits.length} done`];
+    if(d.hToday.length)lines.push(`Done: `+d.hToday.map(h=>h.name).join(', '));
+    if(d.hMissed.length)lines.push(`Remaining: `+d.hMissed.map(h=>h.name).join(', '));
+    if(d.streaks[0]&&d.streaks[0].s>0)lines.push(`Best streak: ${d.streaks[0].name} ×${d.streaks[0].s} days`);
+    return lines.join('\n');
+  }
+
+  // ── WEIGHT ─────────────────────────────────────────────────
+  if(/weight|lbs|pound|goal|lose|gain|bmi|scale/.test(ql)){
+    if(!d.curW)return `No weight data logged yet. Head to the WEIGHT tab to start tracking.`;
+    const lines=[`Current weight: ${d.curW.val} lbs (logged ${d.curW.date})`];
+    if(wgoal){
+      const rem=d.curW.val-wgoal;
+      lines.push(`Goal: ${wgoal} lbs — ${rem>0?rem.toFixed(1)+' lbs to lose':Math.abs(rem).toFixed(1)+' lbs below goal ✓'}`);
+    }
+    if(d.weightTrend!==null)lines.push(`Last entry change: ${d.weightTrend>0?'+':''}${d.weightTrend.toFixed(1)} lbs`);
+    if(weights.length>=2){
+      const first=weights[0];const last=weights[weights.length-1];
+      const total=last.val-first.val;
+      lines.push(`Total change since ${first.date}: ${total>0?'+':''}${total.toFixed(1)} lbs`);
+    }
+    return lines.join('\n');
+  }
+
+  // ── NUTRITION ──────────────────────────────────────────────
+  if(/eat|food|nutrition|protein|calorie|carb|fat|diet|macro|meal/.test(ql)){
+    if(!d.curW)return `Log your weight first so NEXAI can calculate your nutrition targets.`;
+    const kg=d.curW.val*0.453592;
+    const cal=Math.round(kg*22);const pro=Math.round(kg*2.2);const carb=Math.round(cal*0.35/4);const fat=Math.round(cal*0.25/9);
+    return `Nutrition targets (based on ${d.curW.val} lbs):
+► Calories: ${cal} kcal/day
+► Protein: ${pro}g/day (priority for muscle retention)
+► Carbs: ${carb}g/day
+► Fat: ${fat}g/day
+► Fiber: 30g/day
+► Water: ${Math.round(d.curW.val*0.67)} oz/day
+
+Tip: hit protein first — it keeps you full and preserves muscle while cutting.`;
+  }
+
+  // ── VAULT / MONEY / FINANCES ───────────────────────────────
+  if(/money|balance|cash|bank|spend|budget|finance|income|afford|broke|rich|vault|fund/.test(ql)){
+    if(/subscription|sub|netflix|spotify|recurring/.test(ql)){
+      if(!subs.length)return `No subscriptions logged. Add them in VAULT → SUBSCRIPTIONS.`;
+      return `Subscriptions (${fmtAmt(d.tS)}/mo total):
+`+subs.map(s=>`► ${s.name}: ${fmtAmt(s.amt)}/mo`).join('\n');
+    }
+    if(/income|earn|salary|pay/.test(ql)){
+      if(!incomes.length)return `No income sources logged yet.`;
+      return `Monthly income: ${fmtAmt(d.tI)}
+`+incomes.map(i=>`► ${i.name}: ${fmtAmt(toMo(i.amt,i.freq))}/mo (${i.freq})`).join('\n');
+    }
+    if(/spent|spend|expense|zone/.test(ql)){
+      if(!budgets.length)return `No spending zones set. Add them in VAULT → SPENDING ZONES.`;
+      const lines=[`Spending this month:`];
+      budgets.forEach(b=>{const ov=b.spent>b.budget;lines.push(`► ${b.name}: ${fmtAmt(b.spent)}/${fmtAmt(b.budget)}${ov?' ⚠ OVER':''}`)});
+      lines.push(`Subscriptions: ${fmtAmt(d.tS)}`);
+      lines.push(`Total out: ${fmtAmt(d.tSp)}`);
+      return lines.join('\n');
+    }
+    const lines=[`Vault status:`];
+    lines.push(`Income: ${fmtAmt(d.tI)}/mo`);
+    lines.push(`Spent: ${fmtAmt(d.tSp)}/mo`);
+    lines.push(`Remaining: ${fmtAmt(d.remaining)}${d.remaining<0?' ⚠ OVERSPENT':''}`);
+    if(subs.length)lines.push(`Subscriptions: ${fmtAmt(d.tS)}/mo (${subs.length} services)`);
+    const overZones=budgets.filter(b=>b.spent>b.budget);
+    if(overZones.length)lines.push(`Over budget: `+overZones.map(b=>b.name).join(', '));
+    return lines.join('\n');
+  }
+
+  // ── STOCKS / PORTFOLIO / MARKETS ──────────────────────────
+  if(/stock|market|portfolio|invest|share|ticker|trade|equity|crypto|bitcoin|btc|eth|nvda|aapl|tsla|position|gain|loss/.test(ql)){
+    // specific ticker mentioned?
+    const tickers=Object.keys(stockData);
+    const mentioned=tickers.find(t=>ql.includes(t.toLowerCase()));
+    if(mentioned){
+      const sd=stockData[mentioned];
+      const pos=portfolio.find(p=>p.sym===mentioned);
+      const dir=sd.chgPct>=0?'▲':'▼';
+      let resp=`${mentioned} (${sd.name}): $${sd.price.toFixed(2)} ${dir}${Math.abs(sd.chgPct).toFixed(2)}%`;
+      if(pos){
+        const val=sd.price*pos.qty;const cost=pos.cost*pos.qty;const gain=val-cost;
+        resp+=`
+Your position: ${pos.qty} shares @ $${pos.cost} avg`;
+        resp+=`
+Current value: $${val.toFixed(2)} (${gain>=0?'+':''}$${gain.toFixed(2)}, ${cost>0?((gain/cost)*100).toFixed(2):'?'}%)`;
+      }
+      return resp;
+    }
+    if(/portfolio|holding|position/.test(ql)){
+      if(!portfolio.length)return `No positions in portfolio. Use ◆ on the MARKETS tab to add holdings.`;
+      const lines=[`Portfolio: $${d.portVal.toFixed(2)} total (${d.portGain>=0?'+':''}$${d.portGain.toFixed(2)})`];
+      portfolio.forEach(p=>{
+        const sd=stockData[p.sym];if(!sd)return;
+        const val=sd.price*p.qty;const cost=p.cost*p.qty;const gain=val-cost;
+        const pct=cost>0?((gain/cost)*100).toFixed(1):'?';
+        lines.push(`► ${p.sym}: $${val.toFixed(2)} (${gain>=0?'+':''}${pct}%) — ${p.qty} sh @ $${p.cost}`);
+      });
+      return lines.join('\n');
+    }
+    if(/up|gainer|best|top|winner/.test(ql)){
+      return `Top gainers today:
+`+d.topGainers.map(([s,sd])=>`► ${s} +${sd.chgPct.toFixed(2)}% ($${sd.price.toFixed(2)})`).join('\n');
+    }
+    if(/down|loser|worst|drop|fall/.test(ql)){
+      return `Biggest losers today:
+`+d.topLosers.map(([s,sd])=>`► ${s} ${sd.chgPct.toFixed(2)}% ($${sd.price.toFixed(2)})`).join('\n');
+    }
+    if(/pinned|watch/.test(ql)){
+      if(!pinnedStocks.length)return `No pinned stocks. Star stocks on the MARKETS tab.`;
+      return `Pinned stocks:
+`+pinnedStocks.map(sym=>{const sd=stockData[sym];if(!sd)return`► ${sym}: no data`;const dir=sd.chgPct>=0?'▲':'▼';return`► ${sym}: $${sd.price.toFixed(2)} ${dir}${Math.abs(sd.chgPct).toFixed(2)}%`;}).join('\n');
+    }
+    // general market
+    return `Market overview:
+► S&P 500: ${stockData.SPY?((stockData.SPY.chgPct>=0?'▲':'▼')+Math.abs(stockData.SPY.chgPct).toFixed(2)+'%'):'N/A'}
+Top gainer: ${d.topGainers[0]?d.topGainers[0][0]+' +'+d.topGainers[0][1].chgPct.toFixed(2)+'%':'N/A'}
+Top loser: ${d.topLosers[0]?d.topLosers[0][0]+' '+d.topLosers[0][1].chgPct.toFixed(2)+'%':'N/A'}
+
+Portfolio: ${portfolio.length?'$'+d.portVal.toFixed(2)+' ('+(d.portGain>=0?'+':'')+'$'+d.portGain.toFixed(2)+')':'no positions logged'}
+For detailed charts, check the MARKETS tab.`;
+  }
+
+  // ── WEATHER ───────────────────────────────────────────────
+  if(/weather|rain|temperature|forecast|temp|sun|cloud|storm|wind|humid/.test(ql)){
+    return `Tap the yellow button in the top bar to open the full weather forecast for ${weatherLoc.name||'your location'}. It shows today hour-by-hour and a 7-day outlook.`;
+  }
+
+  // ── TIME / DATE ────────────────────────────────────────────
+  if(/what time|what day|what date|today is|current time/.test(ql)){
+    const now=new Date();let h=now.getHours(),m=now.getMinutes(),ap=h>=12?'PM':'AM';h=h%12||12;
+    return `Current time: ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ap} — ${getDayName(d.today)}, ${d.today}`;
+  }
+
+  // ── CATCH-ALL ──────────────────────────────────────────────
+  return `NEXAI didn't find a match for "${q}".
+
+I can answer questions about:
+► Calendar & availability (try "am I free Friday?")
+► Tasks & priorities (try "what's pending?")
+► Habits & streaks (try "what habits did I miss?")
+► Weight & nutrition (try "how far from my goal?")
+► Vault & finances (try "how much money do I have?")
+► Stocks & portfolio (try "how's my portfolio?")
+► Type "summary" for a full daily briefing
+► Type "help" to see all query types`;
+}
+
+function sendChat(){
+  const input=document.getElementById('chat-input');const msg=input.value.trim();if(!msg)return;
+  appendMsg('user',msg);input.value='';
+  document.getElementById('chat-typing').style.display='flex';
+  const chatArea=document.getElementById('chat-area');chatArea.scrollTop=chatArea.scrollHeight;
+  setTimeout(()=>{
+    const reply=nexaiThink(msg);
+    document.getElementById('chat-typing').style.display='none';
+    appendMsg('ai',reply);
+  },320+Math.random()*280);
+}
+function quickChat(msg){document.getElementById('chat-input').value=msg;sendChat();}
+function appendMsg(role,text){
+  const area=document.getElementById('chat-area');
+  const div=document.createElement('div');div.className='msg '+role;
+  div.innerHTML=`<div class="${role}-lbl">${role==='ai'?'NEXAI':'YOU'}</div>${text.replace(/\n/g,'<br>').replace(/►/g,'<span style="color:var(--g1)">►</span>')}`;
+  area.appendChild(div);area.scrollTop=area.scrollHeight;
+}
+function clearChat(){document.getElementById('chat-area').innerHTML='<div class="msg ai"><div class="ai-lbl">NEXAI_v1.0</div>Chat cleared. NEXAI standing by. Type "help" or "summary" to get started.</div>';chatHistory=[];}
+
+// ═══════════════════════════════════════════
+// DATA EXPORT / IMPORT
+// ═══════════════════════════════════════════
+function exportData(){
+  const data={todos,weights,wgoal,habits,incomes,subs,budgets,txs,pinnedStocks,portfolio,events,weatherLoc,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='nexvault-data-'+tod()+'.json';a.click();URL.revokeObjectURL(url);
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(d.todos)todos=d.todos;if(d.weights)weights=d.weights;if(d.wgoal!==undefined)wgoal=d.wgoal;
+      if(d.habits)habits=d.habits;if(d.incomes)incomes=d.incomes;if(d.subs)subs=d.subs;
+      if(d.budgets)budgets=d.budgets;if(d.txs)txs=d.txs;if(d.pinnedStocks)pinnedStocks=d.pinnedStocks;
+      if(d.portfolio)portfolio=d.portfolio;if(d.events)events=d.events;if(d.weatherLoc)weatherLoc=d.weatherLoc;
+      save();renderTodos();renderWeight();renderHabits();renderVault();renderPortfolio();renderCalendar();renderHome();
+      alert('NEXVAULT: Data imported successfully.');
+    }catch(err){alert('Import failed: invalid file.');}
+  };reader.readAsText(file);
+}
+function handleCsvDrop(e){e.preventDefault();e.target.style.borderColor='var(--b2)';const file=e.dataTransfer.files[0];if(file)processCsv(file);}
+function handleCsvFile(input){const file=input.files[0];if(file)processCsv(file);}
+function processCsv(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const lines=e.target.result.split('\n').filter(l=>l.trim());const header=lines[0].toLowerCase();
+    let imported=0;
+    lines.slice(1).forEach(line=>{
+      const cols=line.split(',').map(c=>c.replace(/"/g,'').trim());
+      if(cols.length<2)return;
+      const date=cols[0];const desc=cols[1];const amtRaw=cols[2]||cols[3]||'0';const amt=Math.abs(parseFloat(amtRaw.replace(/[^0-9.-]/g,'')));
+      if(!date||!desc||isNaN(amt)||amt===0)return;
+      const ty=parseFloat(amtRaw)<0?'expense':'income';
+      txs.unshift({id:Date.now()+Math.random(),desc,amt,type:ty,cat:'imported',date:date.slice(0,10)});imported++;
+    });
+    save();renderVault();alert('Imported '+imported+' transactions from CSV.');
+  };reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+document.getElementById('wdt').value=tod();
+document.getElementById('ev-date').value=tod();
+shuffleNews();
+buildTicker();
+renderTodos();renderWeight();renderHabits();renderVault();renderPortfolio();renderCalendar();renderHome();
+tick();setInterval(tick,1000);
+setInterval(()=>{stockData=genStockData();buildTicker();const st=document.getElementById('tab-stocks');if(st&&st.classList.contains('on'))renderStocks();renderHome();},30000);
+initMatrix();
+// Pre-fetch weather silently
+fetchWeather().catch(()=>{});
+</script>
+</body>
+</html>
